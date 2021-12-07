@@ -485,6 +485,10 @@ List of possible errors on Campaign interface
  - 22018 - "Needed at least one transfer template"
  - 22019 - "Participant has already filled the campaign."
  - 22020 - "Participant mobile phone is not defined"
+ - 22021 - "Campaign has not yet started"
+ - 22022 - "Campaign has finished"
+ - 22023 - "Not existing report type."
+ - 22024 - "Missing properties for column names."
 
 In case of an error, the processing is interrupted and the error response is returned to the caller.
 
