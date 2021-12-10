@@ -3,8 +3,7 @@ includes:
 - errors
 ---
 
-![Campaign api](images/favico) ***ViziBit***
-# Campaign API integration
+# Campaign API
 
 # Introduction
 
@@ -295,7 +294,7 @@ Parameter | Default | Description
                     - Means of transmission defined in TransferType
     
     - **status** - <code>DRAFT</code> or <code>PENDING</code>:
-      - </code>DRAFT</code> - user can still change campaign
+      - <code>DRAFT</code> - user can still change campaign
       - <code>PENDING</code> - user can't change campaign because emails to participants to fill are already been sent
       - other statuses can't be defined at creation of campaign, only when created
 - ParticipantDataRequiredKeys - Array of ParticipantData fields expected to be in request
