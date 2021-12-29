@@ -1,0 +1,1085 @@
+# **API Sučelja za integraciju na Signator sustav**
+
+![Logo](https://demo.signator.eu/assets/img/default/logo.svg)
+
+**UVOD**
+
+Ovaj dokument opisuje moguće načine integracije Signator sustava i Sustava X (generičkog sustava). Signator osigurava centralnu ovjeru dokumenata digitalnim certifikatima, pečatima ili vremenskim žigovima.
+
+## Uvodne napomene
+
+> Nadolazeći primjeri koristit će **authorizcijski ključ kao query parametar**.
+
+Ukoliko želite testirati zahtjeve na testnom okruženju, u tablici niže možete pronaći demo gateway host. Autorizacijski ključ potrebno je zatražiti od Vizibita, te ga dodati u header ili upisati kao query parametar (authorization_key) zahtjeva koji želite testirati.
+
+Primjer strukture API URL-a izgleda kako slijedi:
+
+#### HTTP Request
+
+`GET {{GATEWAYHOST}}/v/1/integrator/pdf/signature/certificates/`
+
+Ukoliko želite testirati zahtjeve na testnom okruženju, u tablici niže možete pronaći demo gateway host. Autorizacijski ključ potrebno je zatražiti od Vizibita, te ga dodati u header ili upisati kao query parametar (authorization_key) zahtjeva koji želite testirati.
+
+#### Query Parametri
+
+Parametar | Vrijednost
+--------- | -----------
+**GATEWAYHOST** | https://demo.signator.eu
+**authorization_key** | Vaš autorizacijski ključ. Potrebno ga je dodati u header zahtjeva ili kao **query** parametar.
+
+Ulazni parametri zahtjeva koji se šalju u adresi zahtjeva nalaze se unutar vitičastih zagrada((npr. "/v/1/document/**{{document_id}}**/attributes/").)
+
+## Elektroničko potpisivanje dokumenta (e-Potpis)
+
+Standardni koraci ovjere dokumenta digitalnim potpisom uključuju nekoliko faza:
+
+* **Faza 1**: Kreiranje procesa ovjere
+
+  + uvoz pdf dokumenta koji se treba ovjeriti
+  + provjera certifikata na dokumentu (opcionalno)
+  + elektroničko pečatiranje dokumenta (opcionalno)
+  + definiranje potpisnika i tipova digitalnih potpisa
+  + definiranje pozicije vizualnog dijela digitalnog potpisa
+  + dodavanje privitaka
+  + dodavanje atributa pdf dokumenta koji se ovjerava
+  + pokretanje tijeka rada (workflow) ovjere
+
+* **Faza 2**: Ovjeravanje dokumenta
+  + svi definirani sudionici ovjeravaju dokument
+
+Gore navedeni koraci **Faze 1** mogu se provesti kroz tri opcije:
+
+* **Opcija 1: ručno** - kroz Signator aplikaciju od strane osobe koja kreira i inicira proces ovjere (inicijator)
+* **Opcija 2: polu-automatski** - kroz djelomičnu API integraciju - dokument se automatski šalje u Signator preko API, a Inicijator onda ručno pozicionira slike potpisa i pokreće ovjeru
+* **Opcija 3: automatski** - kroz API integraciju s drugim sustavima (npr. DMS, eArhiva, RMS itd.)
+
+#### Opcija 1: Ručno pokretanje procesa ovjere
+
+Koraci su identični onima opisanim u Fazi 1 a provodi ih inicijator u aplikaciji Signator.
+
+#### Opcija 2: Polu-automatsko pokretanje procesa ovjere
+
+Ova opcija omogućava jednostavnu razinu integracije na način da se iz Sustava X šalje dokument za ovjeru u Signator kroz definirani API. Sustav X potom otvara Signator aplikaciju u novom tabu internet preglednika (automatski SSO login) kako bi osoba koja inicira proces ovjere mogla definirati ovjeritelje, redoslijed ovjeravanja, tipove potpisa te lokacije vizualnih dijelova potpisa.
+
+![Polu-automatsko pokretanje procesa ovjere](https://mobile.signator.hr/poluautomatska_ovjera.png)
+
+Specifičnost ove opcije je da Sustav X otvara novi tab prema poveznici na Signator aplikaciju i konkretan dokument. Dokument se otvara u drugom koraku čarobnjaka za definiranje procesa ovjere. Od inicijatora (obično referent ili tajnik/tajnica) se očekuje da ručno doda sudionike ovjere dokumenta te ručno pozicionira slike potpisa na samom dokumentu. Inicijator na kraju pokreće proces ovjere (workflow).
+
+
+Prednosti ovog modela integracije su:
+
+* u Sustav X aplikaciji nije potrebno kreirati i slati u Signator sustav sudionike ovjere, razinu potpisa, standard i ostale parametre. Taj dio definira Inicijator ručno u Signator sustavu gdje je to već sve implementirano,
+* brža implementacija.
+
+#### Opcija 3: Automatsko pokretanje procesa ovjere
+
+Ova opcija omogućava potpunu razinu automatizacije i integracije na način da se iz Sustava X pošalju svi parametri potrebni za pokretanje procesa ovjere u Signatoru. To znači da su definirani svi potpisnici, redoslijed ovjere, razine potpisa (QES, AES ili SES) te lokacija potpisa na dokumentu.
+
+![Automatsko pokretanje procesa ovjere](https://mobile.signator.hr/img/automatska_ovjera.png)
+
+Koraci provjere certifikata na dokumentu i pečatiranja dokumenta su opcionalni.
+Prednosti ovog modela integracije su:
+
+* proces je u potpunosti automatiziran. Nakon što je dokument proslijeđen u Signator sa svim parametrima, automatski se pokreće proces ovjere. Potpisnici sekvencijalno dobivaju email obavijesti o dokumentu koji ih čeka na ovjeru
+* moguće je poslati više dokumenata na ovjeru, a korisnik onda može iste ovjeriti digitalnim potpisom u Signator aplikaciji.
+
+### **Prikaz integracijskog modela za e-Potpis**
+
+![Prikaz integracijskog modela za e-Potpis](https://mobile.signator.hr/img/ePotpis_integracija.png)
+
+### Opis modela iz perspektive Sustava X (Sustav X → Signator)
+
+Definicija Signator sučelja za e-Potpis nalazi se ovdje.
+
+#### Funkcija: StartApprovalProcess
+
+Sustav X šalje dokument koji treba ovjeriti jedna ili više osoba u Signator sustavu.
+
+`POST {{GATEWAYHOST}}/v/1/document/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "fileType": "pdf",
+  "fileName": "Document name",
+  "initiator": "example.address@domain.com",
+  "participants": [
+    {
+      "email": "example.address@domain.com",
+      "role": "SIGNER",
+      "signatureLevel": "QES",
+      "SignatureImage": {
+        "page": 1,
+        "widgetOffsetX": 100,
+        "widgetOffsetY": 200,
+        "widgetWidth": 300,
+        "widgetHeight": 150,
+        "data": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+        "fileType": "JPEG"
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+      "fileType": "xml",
+      "fileName": "Attachment-12"
+    }
+  ],
+  "attributes": [
+    {
+      "attributeKey": "string",
+      "attributeValue": "string"
+    }
+  ],
+  "addElectronicSealToFinishedDocument": "bool"
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "documentId": 123,
+  "documentUrl": "esign.example.com/#/v/1/document/3"
+}
+```
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **StartApprovalProcess**
+* implementirano u: Signator
+* poziva: Sustav X
+* ulazni parametri:
+  * "file"\* - pdf dokument u obliku base64
+  * "fileType" - vrsta datoteke
+  * "fileName"\* - naziv pdf dokumenta za ovjeru
+  * "initiator"\* - email osobe koja je iz Sustava X poslala dokument na ovjeru
+  * "participants" - [email, role, signatureLevel, signatureImage] - lista ovjeritelja definirana sekvencijalnim redoslijedom (*opcionalni parametar - ako se koristi ovaj parametar, obavezno popuniti niže navedene atribute*)
+    * "email"\* - e-mail adresa ovjeritelja
+    * "role"\* - uloga ovjeritelja APPROVER, SIGNER
+      + napomena: ukoliko se šalje APPROVER, onda se mora odabrati opcija "SES" u signatureLevel
+    * "signatureLevel"\*
+      + signatureLevel moguće vrijednosti: "QES" (kvalificirani poptis), "AES" (napredni potpis), "SES" (pečat). Odnosi se samo na ulogu Signer.
+    * ["SignatureImage" - slika potpisa s vrijednostima:](#pozicioniranje-slike-potpisa-pecata)
+      + "page"\* - stranica dokumenta na koju će slika potpisa biti pozicionirana
+      + "widgetOffsetX"\* - pomak od donjeg lijevog kuta po x osi
+      + "widgetOffsetY"\* - pomak od donjeg lijevog kuta po y osi
+      + "widgetWidth"\* - širina widgeta za slike (ako dokument ima definirano polje za potpis ova vrijednost je ignorirana)
+      + "widgetHeight"\* - visina widgeta za slike (ako dokument ima definirano polje za potpis ova vrijednost je ignorirana)
+      +"data"\* - slika potpisa u obliku base64
+      +"fileType"\* - vrsta datoteke slike potpisa (može biti JPEG ili PNG)
+  * Attachments[file\*, fileType, fileName\*] - lista priloga uz dokument za ovjeru. (*opcionalni parametar - ako se koristi ovaj parametar, obavezno popuniti atribute s oznakom “*”)
+    + "file" - prilog u obliku base64
+    + "fileType" - tip dokumenta
+    + "fileName" - ime priloga
+  * DocumentAttributes[attributeKey\*, attributeValue\*] - lista atributa (iste je potrebno dogovoriti prije implementacije) koji će se slati uz dokument za ovjeru. (*opcionalni parametar - ako se koristi ovaj parametar, obavezno popuniti niže navedene atribute*)
+    + "attributeKey"
+    +"attributeValue"
+
+* izlazni rezultat:
+  * "documentId"\* - ID dokumenta u Signator sustavu za kasniji mogući dohvat statusa i obilježja dokumenta
+  * "documentURL" - poveznica za otvaranje dokumenta u edit modu u Signatoru kako bi inicijator mogao  definirati sve parametre procesa ovjere (potpisnike, tipove potpisa, poziciju potpisa)
+
+### **Opcionalne funkcije**
+
+#### Funkcija: ShareFileToRecepient
+
+Korisniku Signator aplikacije moguće je dostaviti dokument na uvid na nekoliko načina:
+
+*   u njegov korisnički pretinac na Signator portalu
+*   poslati e-mail s poveznicom na dokument na Signator portalu
+*   poslati e-mail s dokumentom kao privitkom
+
+`POST {{GATEWAYHOST}}/v/1/document/delivery/`
+> JSON Body ulaz:
+
+```json
+{
+  "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "fileType": "pdf",
+  "fileName": "Document name",
+  "initiator": "example.address@domain.com",
+  "recipients": [
+    {
+      "email": "example.address@domain.com",
+      "oib": 1
+    }
+  ],
+  "attachments": [
+    {
+      "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+      "fileType": "xml",
+      "fileName": "Attachment-12"
+    }
+  ],
+  "asAttachment": true
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "documentId": 123
+}
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+*   naziv funkcije: **ShareFileToRecepient**
+*   implementirano u: Signator
+*   poziva: Sustav X
+*   ulazni parametri:
+  *   "file"* - pdf dokument u obliku base64
+  *   "fileType" - vrsta datoteke
+  *   "fileName"* - naziv pdf dokumenta za dostavu
+  *   "initiator"* - email vlasnika dokumenta
+  *   "recipients"*\[email, OIB\] - lista primatelja s vrijednostima
+  *   Attachments*\[file*, fileType, fileName*\] - lista priloga uz dokument za ovjeru
+  *   “asAttachment” (*opcionalni parametar*) - poslati dokument na email kao prilog
+*   izlazni rezultat:
+  *   "documentId"* - ID dokumenta koji je dostavljen primatelju
+
+#### Funkcija: GetDocumentAttributes
+
+Dohvati sve atribute dokumenta prema documentID.
+
+`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/attributes/`
+
+> Input **QUERY** parameter document_id
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+[
+  {
+    "attributeKey": "string",
+    "attributeValue": "string"
+  }
+]
+```
+
+**Vrijednosti putanje**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+document_id |  | Id dokumenta.
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+*   naziv funkcije: **GetDocumentAttributes**
+*   implementirano u: Signator
+*   poziva: Sustav X
+*   ulazni parametri:
+  *   "documentId"* - ID dokumenta za koji je potrebno dohvatiti sve atribute
+*   izlazni rezultat:
+  *   DocumentAttributes\[attributeKey, attributeValue\] - lista naziva atributa i njihovih vrijednosti koje su definirane u Signator sustavu
+
+#### Funkcija: GetDocumentStatus
+
+Dohvati statuse dokumenta prema documentID.
+
+`POST {{GATEWAYHOST}}/v/1/document/status/`
+
+> JSON Body ulaz:
+
+```json
+[
+  {
+    "documentId": 123
+  }
+]
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+[
+  {
+    "documentId": 123,
+    "worfklowStatus": "PENDING"
+  }
+]
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+*   naziv funkcije: **GetDocumentStatus**
+*   implementirano u: Signator
+*   poziva: Sustav X
+*   ulazni parametri:
+  *   DocumentIdentifier*\[documentId\] - lista documentId-a za koje je potrebno dohvatiti status
+*   izlazni rezultat:
+  *   Status\[documentId*, DocumentStatus\] - lista documentId-a s njihovim statusima
+    *   DocumentStatus moguće vrijednosti:
+      *   "FINISHED" - svi sudionici rada su potpisali/odobrili dokument
+      *   "CANCELED" - inicijator tijeka rada je otkazao tijek rada
+      *   "REJECTED” - netko od sudionika tijeka rada je odbio potpisati/odobriti dokument
+      *   “PENDING” - čeka se akcija nekog od sudionika tijeka rada
+      *   “DELETED” - tijek rada je obrisan
+      *   “DRAFT” - tijek rada je definiran, ali nema sudionika
+  
+#### Funkcija: GetApprovedDocument
+
+Dohvati potpisani dokument.
+
+`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/`
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "documentId": 123,
+  "signedFile": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
+}
+```
+**Vrijednosti putanje**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+document_id |  | Id dokumenta.
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+*   naziv funkcije: **GetApprovedDocument**
+*   implementirano u: Signator
+*   poziva: Sustav X
+*   ulazni parametri:
+  *   “documentId”* - ID potpisanog dokumenta koji je potrebno dohvatiti
+*   izlazni rezultat:
+  *   “documentId”* - ID potpisanog dokumenta
+  *   “signedFile”* - ovjereni PDF dokument u obliku base64
+
+#### Funkcija: UpdateDocumentAttributes
+
+Ažuriraj atribute dokumenta.
+
+`PUT {{GATEWAYHOST}}/v/1/document/{{document_id}}/attributes/`
+
+> JSON Body ulaz:
+
+```json
+[
+  {
+    "attributeKey": "string",
+    "attributeValue": "string"
+  }
+] 
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "documentId": 123
+}
+```
+
+**Vrijednosti putanje**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+document_id |  | Id dokumenta.
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+*   naziv funkcije: **UpdateDocumentAttributes**
+*   implementirano u: Signator
+*   poziva: Sustav X
+*   ulazni parametri:
+  *   “documentId”* - ID dokumenta kojem se želi ažurirati atribute
+  *   DocumentAttributes\[attributeKey*, attributeValue*\] - lista naziva atributa i njihovih vrijednosti koje su definirane u Signator sustavu
+*   izlazni rezultat:
+  *   “documentId”* - ID ažuriranog dokumenta
+
+#### Funkcija: VerifyDocumentCertificates
+
+Funkcija provjerava jesu li svi digitalni potpisi valjani i kvalificirani.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/signature/certificates/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo="
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "SignatureValid": true,
+  "Signatures": [
+    {
+      "Valid": true,
+      "Timestamped": true,
+      "Time": "2021-01-01T23:59:59",
+      "Qualified": "Granted",
+      "ChainValidationStatus": "Valid",
+      "Subject": "/C=HR/O=TEST/OU=Signature/S=FIRSTNAME/G=LASTNAME/SN=PNOHR-00000000001/CN=FIRSTNAME LASTNAME",
+      "Status": "Valid",
+      "Type": "Standard"
+    }
+  ]
+}
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+*   naziv funkcije: **VerifyDocumentCertificates**
+*   implementirano u: Signator
+*   poziva: Sustav X
+*   ulazni parametri:
+  *   “File”* - dokument
+*   izlazni rezultat:
+  *   “SignatureValid”*- odgovor jesu li svi potpisi validni
+  *   “Signatures\[\]”* - lista potpisa s detaljima za svaki potpis
+    *   SignatureDetails vrijednosti:
+      *   “Valid” - validnost potpisa
+      *   “Timestamped” - ima li potpis vremenski pečat
+      *   “Time” - vrijeme potpisa (ukoliko potpis nema vremenski pečat, vraća vrijeme servera)
+      *   “Qualified” - status kvalificiranosti
+      *   “ChainValidationStatus” - status validacije lanca
+      *   “Subject” - informacije o potpisniku
+      *   “Status” - status potpisa
+      *   “Type” - tip potpisa
+  
+#### Napomene
+
+* Sučelja koriste REST za pozive na Signator API
+* Sva razmjena podataka obavlja se koristeći **HTTP** u **JSON** formatu.
+
+### **Opis modela iz perspektive Signatora (Signator → Sustav X)**
+
+Prijedlog implementacije sučelja za integraciju na strani Sistem Integratora nalazi se [ovdje](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSignature%20Integration).
+
+#### Funkcija: FinishApprovalProcess
+
+Nakon što je dokument ovjeren, Signator poziva funkciju na strani Sustava X kako bi mu predao ovjereni dokument.
+
+
+`POST {{GATEWAYHOST}}/v/1/document/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "documentId": 123,
+  "documentUrl": "esign.example.com/#/v/1/document/3",
+  "signedFile": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "fileName": "Document name",
+  "status": "FINISHED",
+  "attributes": [
+    {
+      "attributeKey": "string",
+      "attributeValue": "string"
+    }
+  ]
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "documentId": 123
+}
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **FinishApprovalProcess**
+* implementirano u: Sustav X
+* poziva: Signator
+* ulazni parametri:
+  * “documentId”\* - ID dokumenta koji je ovjeren kao referenca SustavuX o kojem se dokumentu radi
+  * “documentUrl”\* - putanja ovjerenog dokumenta. Ovjereni dokument može se otvoriti iz Sustava X otvaranjem putanje konkretnog dokumenta. Dokument može vidjeti osoba ako je sudionik procesa ovjere ili joj je dokument podijeljen.
+  * “signedFile”\*- digitalno ovjereni dokument u obliku base64
+  * “status”\* - status dokumenta documentId
+    * status dokumenta moguće vrijednosti:
+      * "FINISHED" - svi sudionici rada su potpisali/odobrili dokument
+      * "CANCELED" - inicijator tijeka rada je otkazao tijek rada
+      * "REJECTED” - netko od sudionika tijeka rada je odbio potpisati/odobriti dokument
+  * DocumentAttributes\*[attributeKey, attributeValue] - lista naziva atributa ovjerenog dokumenta i njihovih vrijednosti
+
+* izlazni rezultat:
+  * “documentId”\* - ID dokumenta u Signator sustavu
+
+#### Funkcija: GetDocumentAttributes
+
+Dohvati sve atribute dokumenta prema documentID.
+
+`POST {{GATEWAYHOST}}/v/1/document/attributes/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "documentId": 123
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+[
+  {
+    "attributeKey": "string",
+    "attributeValue": "string"
+  }
+]
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **GetDocumentAttributes**
+* implementirano u: Sustav X
+* poziva: Signator
+* ulazni parametri:
+  * “documentId”\* - ID dokumenta za koji je potrebno dohvatiti sve atribute
+
+* izlazni rezultat:
+  * DocumentAttributes[attributeKey\*, attributeValue\*] - lista naziva atributa i njihovih vrijednosti koje su definirane u Sustav X
+  
+#### Napomena
+
+Izvođač može sam definirati naziv endpointa, dok format samog zahtjeva i odgovora trebaju biti u formatu navedenom u definiciji.
+
+### **Povratne informacije o greškama**
+
+Sve greške vraćaju HTTP status code **400**, osim ako je došlo do nepredviđene situacije. U tom slučaju HTTP status kod je **500**.
+
+Sve greške se vraćaju kao **JSON**.
+
+Lista mogućih grešaka za Signator sučelje:
+
+* 361 - Korisnik nije pronađen
+* 320 - Nedefinirana uloga
+* 431 - Nemoguće kreirati tijek rada s pruženim podacima
+* 1 - Tijek rada nije pronađen
+* 3 - Ne postoji identifikator tijeka rada
+* 432 - Tijek rada nije završen
+* 1001 - Istekao JWT token
+* 4000 - Autorizacijski ključ neispravan
+
+U slučaju pojave bilo koje greške, obrada se u tom trenutku prekida i vraća se odgovor s greškom pozivatelju.
+
+Detaljniji opis greške nalazit će se u info elementu.
+
+## Elektroničko pečatiranje dokumenta (e-Pečat)
+
+### **Prikaz integracijskog modela za e-Pečat**
+
+![Prikaz integracijskog modela za e-Pečat](https://mobile.signator.hr/img/ePecat_integracija.png)
+
+### Ovjera dokumenta e-Pečatom
+
+Dokument se može ovjeriti s certifikatom izdanim na tvrtku koristeći HSM uređaj. Postoji nekoliko modela ovjere s obzirom na vizualizaciju pečata koji su navedeni u narednim poglavljima.
+
+### Opis modela iz perspektive Sustava X (Sustav X → Signator)
+
+Definicija Signator sučelja za e-Pečat nalazi se [ovdje](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration).
+
+Postoje četiri opcije pečatiranja dokumenta:
+* **Opcija 1**: pečatiranje dokumenta s fiksiranim izgledom i pozicijom samog pečata
+* **Opcija 2**: pečatiranje dokumenta s proizvoljnim tekstom u vizualnom dijelu pečata i proizvoljnom pozicijom pečata
+* **Opcija 3**: pečatiranje dokumenta s proizvoljnim tekstom ali fiksiranom pozicijom
+* **Opcija 4**: pečatiranje dokumenta s proizvoljnom slikom i pozicijom pečata
+
+#### Opcija 1: ePečat za elektroničku ispravu
+
+Pečatiranje dokumenta s fiksiranim izgledom i pozicijom samog pečata.
+
+Ova opcija namijenjena je za pečatiranje dokumenta s predefiniranim dimenzijama i izgledom pečata u skladu s elektroničkom ispravom. Dokument na dnu stranice mora imati predviđeno prazno mjesto jer će se vizualni dio elektroničkog pečata ispisati preko tog dijela.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/electronic_deed/fixed/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "RecordNumber": "123/ab/731",
+  "SystemId": "ePotpis",
+  "SignatureOptions": {
+    "Reason": "New contract",
+    "Location": "Zurich",
+    "SignerContactInfo": "john.doe@example.com, Example ltd.",
+    "SignerName": "John Doe"
+  }
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "SignedFile": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "StorageProviderDocumentId": "C211D9D33ECBAC28F54CC",
+  "RecordNumber": "123/ab/731"
+}
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **SealDocumentWithFixedElectronicDeed**
+* implementirano u: Signatoru
+* poziva: Sustav X
+* ulazni parametri:
+  * “File”\* - id dokumenta u Sustavu X
+  * “RecordNumber\* - id dokumenta u sustavu za centralnu pohranu dokumenata (može biti DMS, eArhiva, RMS itd.)
+  * “SystemID”\* - unaprijed dogovorena šifra sustava koji se integrira sa Signator sustavom
+  * “SignatureOptions”
+    * “Reason” - razlog potpisa
+    * “Location” - lokacija na kojoj je nastao potpis
+    * “SignerContactInfo” - informacije o potpisniku
+    * “SignerName” - ime potpisnika
+
+* izlazni rezultat:
+  * “SignedPDF” - potpisani pdf dokument u obliku string base 64
+  * “StorageProviderDocumentId”
+  * “RecordNumber”
+
+Izgled pečata:
+
+![Izgled pečata](https://mobile.signator.hr/img/el_deed_pecat.png)
+
+Lokacija na koju se fiksno stavlja elektronički pečat (vrijedi samo za A4 dimenzije papira):
+
+![Lokacija pečata](https://mobile.signator.hr/img/pozicija_el_deed.png)
+
+* Dimenzije elektroničkog pečata (vrijedi samo za A4 dimenzije papira):
+  * visina: 45 mm
+  * širina: 122 mm
+
+#### Opcija 2: ePečat s proizvoljnim tekstom i pozicijom
+
+Pečatiranje dokumenta s proizvoljnim tekstom u vizualnom dijelu pečata i proizvoljnom lokacijom pečata.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/positioned/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "SignatureText": {
+    "Text": "Example text",
+    "Page": 1,
+    "WidgetOffsetX": 100,
+    "WidgetOffsetY": 200,
+    "WidgetWidth": 300,
+    "WidgetHeight": 150
+  },
+  "SignatureOptions": {
+    "Reason": "New contract",
+    "Location": "Zurich",
+    "SignerContactInfo": "john.doe@example.com, Example ltd.",
+    "SignerName": "John Doe"
+  }
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **SealDocumentWithPositionedText**
+* implementirano u: Signatoru
+* poziva: Sustav X
+* ulazni parametri:
+  * “File”\* - dokument koji se pečatira
+  * ["SignatureText"\* - tekst koji se upisuje u vizualni dio pečata](#pozicioniranje-slike-potpisa-pecata)
+    + “Text”\* - tekst vidljiv u vizualnom dijelu digitalnog pečata
+    + “Page” - stranica na koju se stavlja pečat
+    + “WidgetOffsetX” - pozicija pečata - donji lijevi kut, x os
+    + “WidgetOffsetY” - pozicija pečata - donji lijevi kut, y os
+    + “WidgetWidth” - visina slike pečata
+    +“WidgetHeight” - širina slike pečata
+  * “SignatureOptions”\*
+    + “Reason” - razlog potpisa
+    + “Location” - lokacija na kojoj je nastao potpis
+    + “SignerContactInfo” - informacije o potpisniku
+    + “SignerName” - ime potpisnika
+
+* izlazni rezultat:
+  * Binary response s content typeom “application/pdf”
+  
+#### Opcija 3: ePečat s proizvoljnim tekstom i fiksnom pozicijom
+
+Pečatiranje dokumenta s proizvoljnim tekstom ali fiksiranom pozicijom.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/fixed/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "Text": "Sample text"
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **SealDocumentWithFixedText**
+* implementirano u: Signatoru
+* poziva: Sustav X
+* ulazni parametri:
+  * “File”\* - dokument koji se pečatira
+  * "Text"\* - tekst koji se upisuje u vizualni dio pečata
+
+* izlazni rezultat:
+  * Binary response s content typeom “application/pdf”
+
+Primjer izgleda slike pečata s proizvoljnim tekstom koji se upisuje u vizualni dio pečata (“KLASA: XXX-XX/XX-XX/XXXX, URBROJ: YYYYY-YYYYYY-YY-YY, Datum: DD.MM.YYYY.” na slici iz primjera) i fiksnom pozicijom:
+
+![Izgled pečata](https://mobile.signator.hr/img/pecat_proizvoljni_tekst.png)
+
+#### Opcija 4: ePečat s proizvoljnom slikom i pozicijom
+
+Pečatiranje dokumenta s proizvoljnom slikom i pozicijom pečata.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/image/positioned/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "SignatureImage": {
+    "Page": 1,
+    "WidgetOffsetX": 100,
+    "WidgetOffsetY": 200,
+    "WidgetWidth": 300,
+    "WidgetHeight": 150,
+    "ImageData": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo="
+  },
+  "SignatureOptions": {
+    "Reason": "New contract",
+    "Location": "Zurich",
+    "SignerContactInfo": "john.doe@example.com, Example ltd.",
+    "SignerName": "John Doe"
+  }
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **SealDocumentWithPositionedImage**
+* implementirano u: Signatoru
+* poziva: Sustav X
+* ulazni parametri:
+  * “File”\* - dokument koji se pečatira
+  * [“SignatureImage”\* -slika koja se dodaje u vizualni dio pečata](#pozicioniranje-slike-potpisa-pecata)
+    * “ImageData”\* - Base64 slika potpisa
+    * “Page” - stranica na koju se stavlja pečat
+    * “WidgetOffsetX” - pozicija pečata - donji lijevi kut, x os
+    * “WidgetOffsetY” - pozicija pečata - donji lijevi kut, y os
+    * “WidgetWidth” - visina slike pečata
+    * “WidgetHeight” - širina slike pečata
+  * “SignatureOptions”\*
+    * “Reason” - razlog potpisa
+    * “Location” - lokacija na kojoj je nastao potpis
+    * “SignerContactInfo” - informacije o potpisniku
+    * “SignerName” - ime potpisnika
+
+### **Opis modela iz perspektive Signatora (Signator -> Sustav X)**
+
+Prijedlog implementacije sučelja za integraciju na strani Sistem Integratora nalazi se [ovdje](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSeal%20Integration).
+
+#### Funkcija: StoreDocument
+
+Funkcija osigurava spremanje dokumenta u centralnu pohranu dokumenata ukoliko ista postoji (može biti DMS, eArhiva, RMS itd.).
+
+`{{GATEWAYHOST}}/v/1/integrator/store_document/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "SignedFile": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "ProviderType": "EXAMPLE_DMS",
+  "ProviderInfo": {
+    "StorageProviderDocumentId": "AA/BB/CC-01"
+  }
+}
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **StoreDocument**
+* implementirano u: SustavuX
+* poziva: Signator
+* ulazni parametri:
+  * “SignedFile”\* - potpisan dokument
+
+* izlazni rezultat:
+  * “ProviderType”\* - koji sustav sprema pečatirane dokumente
+  * “ProviderInfo”\*
+    * “StorageProviderDocumentId” - id dokumenta u centralnom sustavu za pohranu (može biti DMS, eArhiva, RMS itd.).
+
+### Provjera autentičnosti dokumenta
+
+Vanjski korisnici imaju mogućnost provjere autentičnosti dokumenta skeniranjem QR koda ili unosom predefinirane URL adrese te unosom broja zapisa i kontrolnog broja.
+
+#### Funkcija: VerifyDocumentAuthenticity
+
+Funkcija osigurava poziv od strane vanjskog korisnika koji želi verificirati dokument tako da skenira QR kod zapisan na vizualnom dijelu pečata ili upisuje URL verifikacijske stranice.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/verify_document_authenticity/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "StorageProviderDocumentId": "AA/BB/CC-01"
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "AutenthicityDocument": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
+}
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **VerifyDocumentAuthenticity**
+* implementirano u: SustavuX
+* poziva: Signator
+* ulazni parametri:
+  * “StorageProviderDocumentId”\* - id dokumenta u centralnom sustavu za pohranu (može biti DMS, eArhiva, RMS itd.).
+
+* izlazni rezultat:
+  * “AuthenticityDocument”\* - dokument koji se prikazuje krajnjem korisniku koji želi provjeriti autentičnost dokumenta. Tvrtka/institucija određuje na koji način se prikazuje informacija za krajnjeg korisnika:
+    * vraćanje samog pečatiranog dokumenta
+    * vraćanje dokumenta koji ima informaciju o autentičnosti i izvornosti dokumenta
+
+Na strani Sustava X je da temeljem odluke Klijenta implementira ili prvu ili drugu opciju. Signator uvijek povratno dobiva dokument koji prikazuje na verifikacijskoj web stranici.
+
+Primjer QR koda zapisanog na vizualnom dijelu pečata prikazan je na slici ispod. Skeniranjem QR koda korisniku će se otvoriti verifikacijska stranica, na kojoj će polja “Record number” i “Control number” biti automatski popunjena. U slučaju da korisnik ručno pristupa verifikacijskoj stranici, bez skeniranja QR koda, vrijednosti u polja “Record number” i “Control number” moraju biti ručno upisana.
+
+![Provjera autentičnosti dokumenta](https://mobile.signator.hr/img/verify_2.png)
+![Provjera autentičnosti dokumenta](https://mobile.signator.hr/img/verify_1.png)
+
+#### Povratna informacija o greškama
+
+Sve greške vraćaju HTTP status code **400**, osim ako je došlo do nepredviđene situacije. U tom slučaju HTTP status kod je **500**.
+
+Sve greške se vraćaju kao **JSON**.
+
+Lista mogućih grešaka za Signator sučelje
+
+* 2103 - Verifikacijski sustav nije dostupan
+* 2104 - Priloženi dokument nije PDF dokument
+* 2105 - Nedostaje “RecordNumber” parametar
+* 2106 - Nedostaje “SystemId” parametar
+* 2107 - Nedostaje “File” parametar
+* 2108 - Nedostaje “ProviderData” parametar
+* 2109 - Nedostaje “ProviderType” parametar
+* 2110 - Traženi verifikacijski unos za ažuriranje ne postoji u bazi
+* 2111 - Unos za “RecordNumber” već postoji za “SystemId”
+* 2112 - Nije moguć update za traženi unos
+* 2113 - Nedostaje JWT token u zahtjevu
+* 2114 - JWT token je istekao
+
+U slučaju pojave bilo koje greške, obrada se u tom trenutku prekida i vraća se odgovor s greškom pozivatelju.
+
+Detaljniji opis greške će se nalaziti u info elementu.
+
+## eObrasci
+
+Signator ima mogućnost hostanja PDF dinamičkih obrazaca unutar svog sučelja u web pregledniku. Krajnji korisnik može iz liste objavljenih obrazaca odabrati jedan, popuniti ga i predati. Predani obrazac šalje se u Signator backend u obliku popunjenog PDF dokumenta koji može biti ovjeren digitalnim potpisom, te listu svih popunjenih vrijednosti o ubliku JSON ili XML strukturiranih podataka. Isto tako je moguće poslati popunjeni i ovjereni PDF dokument u Sustav X. Definicija modela nalazi se na sljedećem dijagramu.
+
+### **Prikaz integracijskog modela**
+
+![eObrasci integracijski model](https://mobile.signator.hr/img/eobrasci_model.png)
+
+### **Opis modela iz perspektive Signatora (Signator → Sustav X)**
+
+#### Funkcija: StoreSubmittedForm
+
+Nakon što je korisnik popunio obrazac, Signator ga šalje u obliku PDF-a, zajedno s popunjenim poljima u JSON formatu, u Sustav X.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/submitted_form/`
+
+> JSON Body ulaz:
+
+```json
+{
+  "documentId": 123,
+  "documentUrl": "esign.example.com/#/v/1/document/3",
+  "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "fileType": "pdf",
+  "fileName": "file name",
+  "submittedFormIdentifier": "13",
+  "submittedFormData": {
+    "txtName": "Name",
+    "txtSurname": "Surname",
+    "txtMail": "examle@address.com"
+  },
+  "attachments": [
+    {
+      "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+      "fileType": "xml",
+      "fileName": "Attachment-12"
+    }
+  ]
+}
+```
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+{
+  "documentId": 123
+}
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**authorization_key** |  | Autorizira korisnika.
+
+* naziv funkcije: **StoreSubmittedForm**
+* implementirano u: Sustavu X
+* poziva: Signator
+* ulazni parametri:
+  * “documentId”\* - documentId popunjenog obrasca iz Signator sustava
+  * “documentUrl”\* - putanja popunjenog obrasca
+  * “file”\* - pdf dokument u obliku base64
+  * “fileType”\* - vrsta datoteke
+  * “fileName”\* - naziv pdf dokumenta za ovjeru
+  * “submittedFormIdentifier”\* - identifikator obrasca
+  * “submittedFormData[]“\* - popunjeni podaci iz obrasca u objektu u key:value formatu
+  * Attachments\*[file\*, fileType\*, fileName\*] - lista priloga uz obrazac
+    * “file” - prilog u obliku base64
+    * “fileType” - tip dokumenta
+    * “fileName” - ime priloga
+
+* izlazni rezultat:
+  * odgovor HTTP 200
+
+### Opis modela iz perspektive Sustava X (Sustav X → Signator)
+
+#### [Funkcija: UpdateDocumentAttributes](#funkcija-updatedocumentattributes)
+
+
+## Autorizacija
+
+### Autorizacija prema Signator sučelju
+
+Autorizacija na Signator sučelje izvedena je korištenjem JWT tokena.
+
+Izvođač mora zatražiti JWT token od Vizibita (različiti tokeni će se koristiti za testno i produkcijsko okruženje, kao i za komunikaciju prema različitim sustavima).
+
+**Token sadržava:**
+
+* Trajanje pristupa
+* Identifikator usluge koja pristupa sučelju
+
+**JWT token se prema sučelju šalje na jedan od sljedećih načina:**
+
+* U query parametru authorization_key
+* U header-u zahtjeva kao AuthorizationKey parametar
+
+### Autorizacija prema sučelju Sustava X
+
+Izvođač mora odabrati jedan od ponuđenih modela autorizacije na svoj sustav:
+
+* Basic authentication
+* JWT tokens
+
+## Pozicioniranje slike potpisa/pečata
+Slika ispod objašnjava način na koji funkcionira opcija pozicioniranja slike potpisa/pečata koja se koristi u funkcijama [StartApprovalProcess](#funkcija-startapprovalprocess) i [SealDocumentWithPositionedText](#opcija-2-polu-automatsko-pokretanje-procesa-ovjere).
+
+Prilikom slanja parametara za određivanje pozicije slike potpisa, odnosno pečata, potrebno je pretvoriti svoj trenutni viewport u viewport PDF dokumenta.
+
+Primjer PDF dokumenta prikazan na slici prikazan je u koordinatnom sustavu u dimenzijama 612x792 jedinica (A4 dokument). Jedna jedinica u PDF koordinatnom sustavu iznosi 1/72 inča.
+
+Parametri koji se šalju su **“WidgetOffsetX”** (oznaka u slici **“LLX”**) i **“WidgetOffsetY”** (oznaka u slici **“LLY”**) kao koordinate donjeg lijevog kuta widgeta, te **“WidgetHeight”** (oznaka u slici **“HEIGHT”**) i **“WidgetWidth”** (oznaka u slici **“WIDTH”**) kao podaci o visini i širini widgeta u koordinatnom sustavu PDF dokumenta.
+
+![Pozicioniranje slike potpisa slika 1](https://mobile.signator.hr/img/poz_slika_potpisa_2.png)
+
+Slika potpisa je samo jedan dio widgeta (primjer widgeta nalazi se na slici ispod) , te je isto potrebno uzeti u obzir prilikom određivanja vrijednosti parametara koji se šalju.
+
+![Pozicioniranje slike potpisa slika 2](https://mobile.signator.hr/img/poz_slika_potpisa_1.png)
