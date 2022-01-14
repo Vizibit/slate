@@ -53,6 +53,7 @@ configure :build do
   activate :minify_javascript
   # activate :gzip
 end
+activate :directory_indexes
 
 # Deploy Configuration
 # If you want Middleman to listen on a different port, you can set that below

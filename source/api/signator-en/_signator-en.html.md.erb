@@ -192,7 +192,7 @@ Parameter | Default | Description
 #### Function: ShareFileToRecepient
 
 Document can be delivered to the Signator user for inspection in several ways:
-  
+
   * to his user inbox on Signator portal
   * send e-mail with a link to the document on the Signator portal
   * send e-mail with document attachment
@@ -250,7 +250,7 @@ Parameter | Default | Description
 
 * response:
   * "documentId"\* - document ID
-  
+
 #### Function: GetDocumentAttributes
 
 Sharing file with other users.
@@ -384,7 +384,7 @@ Update document attributes.
     "attributeKey": "string",
     "attributeValue": "string"
   }
-] 
+]
 ```
 
 > If successful the above command returns code **200 OK** and JSON body structured like this:
@@ -473,7 +473,7 @@ Parameter | Default | Description
       + “Subject” - signer information
       + “Status” - signer status
       + “Type” - signature type
-  
+
 #### Notes
 
 The Contractor can define the endpoint name himself, while  the format of the request and response should be in the format specified in the definition.
@@ -688,7 +688,7 @@ Location where the electronic seal is positioned (valid only for A4 paper dimens
 * Electronic seal dimensions (valid only for A4 paper dimensions):
   * height : 45 mm
   * width: 122 mm
-  
+
 #### Option 2: e-Seal with arbitrary text and position
 
 Seal a document with arbitrary text in the visual part of the seal and arbitrary location of the seal.
@@ -837,7 +837,7 @@ Parameter | Default | Description
     * “Location” - seal location
     * “SignerContactInfo” - signer information
     * “SignerName” - signer name
-  
+
 ### **Model description from the Signator perspective (Signator → SystemX)**
 Proposal for implementation of the integration interface on the system integrator side can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSeal%20Integration).
 
