@@ -24,7 +24,85 @@ Parameter | Value
 
 ## Campaign API Calls
 
-![Campaign api](images/Campaign_diagram.png)
+![Campaign api](images/Campaign_diagram_approval.png)
+
+### Login User
+
+> If successful the above command returns JSON structured like this:
+
+```json
+{
+  "user":
+  {
+  "Id": "8e7c1d26-52f5-44e5-aa00-1d5fcfdea690",
+  "ExternalId": "jmaric",
+  "FirstName": "Josip",
+  "LastName": "Marić",
+  "Email": "josip.maric@vizibit.hr",
+  "LoginType": "LDAP",
+  "Status": "ACTIVE"
+  },
+  "token":"..."
+
+}
+
+```
+
+This endpoint returns data about user. Retrieved token has limited expiration time.
+
+**HTTP Request**
+
+`GET {{GATEWAYHOST}}/v/1/campaign/login`
+
+### Get Users
+
+> If successful the above command returns JSON structured like this:
+
+```json
+{
+  "page": 1,
+  "perPage": 12,
+  "pages": 1,
+  "total": 2,
+  "count": 2,
+  "type": "User",
+  "results": [
+    {
+    "Id": "Id_1",
+    "ExternalId": "External_example_1",
+    "FirstName": "...",
+    "LastName": "...",
+    "Email": "example1@vizibit.eu",
+    "LoginType": "LDAP",
+    "Status": "ACTIVE"
+    },
+    {
+    "Id": "Id_2",
+    "ExternalId": "External_example_2",
+    "FirstName": "...",
+    "LastName": "...",
+    "Email": "example2@vizibit.eu",
+    "LoginType": "LDAP",
+    "Status": "ACTIVE"
+    }
+}
+```
+
+This endpoint retrieves user list.
+
+`GET {{GATEWAYHOST}}/v/1/campaign/{id}`
+
+**Route Values**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+id |  | Id of the campaign requested in call.
+
+**Query Parameters**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+**authorization_key** |  | Indicates the user and his authorities.
 
 ### Get Campaigns
 
@@ -78,14 +156,35 @@ Parameter | Value
           }
       ],
       "ParticipantDataRequiredKeys": [],
-      "DeliveryAddresses": ["example@vizibit.eu"]
+      "DeliveryAddresses": ["example@vizibit.eu"],
+      "Approver": {
+      "Id": "Id_1",
+      "ExternalId": "External_example_1",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example1@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+      },
+
+      "ApproverId": "Id_1",
+      "Owner": {
+      "Id": "Id_2",
+      "ExternalId": "External_example_2",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example2@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+       },
+      "OwnerId": "Id_2"
     }
   ]
 }
 
 ```
 
-This endpoint retrieves all campaigns requested by parameters in query.
+This endpoint retrieves all campaigns that require parameters in the query for which the user is marked as owner or approver.
 
 **HTTP Request**
 
@@ -157,8 +256,29 @@ perPage | 12 | Maximal number of campaigns returned in each page.
     }
   ],
   "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": ["example@vizibit.eu"]
-}
+  "DeliveryAddresses": ["example@vizibit.eu"],
+  "Approver": {
+  "Id": "Id_1",
+  "ExternalId": "External_example_1",
+  "FirstName": "...",
+  "LastName": "...",
+  "Email": "example1@vizibit.eu",
+  "LoginType": "LDAP",
+  "Status": "ACTIVE"
+  },
+
+  "ApproverId": "Id_1",
+  "Owner": {
+  "Id": "Id_2",
+  "ExternalId": "External_example_2",
+  "FirstName": "...",
+  "LastName": "...",
+  "Email": "example2@vizibit.eu",
+  "LoginType": "LDAP",
+  "Status": "ACTIVE"
+   },
+  "OwnerId": "Id_2"
+  }
 ```
 
 This endpoint retrieves a specific campaign.
@@ -211,7 +331,12 @@ Parameter | Default | Description
       },
       "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
     }],
-  "status": "DRAFT"
+  "status": "DRAFT",
+    "ParticipantDataRequiredKeys": [],
+    "DeliveryAddresses": ["example@vizibit.eu"],
+    "ApproverId": "Id_1",
+    "OwnerId": "Id_2"
+    }
 }
 ```
 
@@ -257,7 +382,31 @@ Parameter | Default | Description
       }
   ],
   "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": []
+  "DeliveryAddresses": [],
+    "ParticipantDataRequiredKeys": [],
+    "DeliveryAddresses": ["example@vizibit.eu"],
+    "Approver": {
+    "Id": "Id_1",
+    "ExternalId": "External_example_1",
+    "FirstName": "...",
+    "LastName": "...",
+    "Email": "example1@vizibit.eu",
+    "LoginType": "LDAP",
+    "Status": "ACTIVE"
+    },
+
+    "ApproverId": "Id_1",
+    "Owner": {
+    "Id": "Id_2",
+    "ExternalId": "External_example_2",
+    "FirstName": "...",
+    "LastName": "...",
+    "Email": "example2@vizibit.eu",
+    "LoginType": "LDAP",
+    "Status": "ACTIVE"
+     },
+    "OwnerId": "Id_2"
+    }
 }
 ```
 
@@ -289,9 +438,9 @@ Parameter | Default | Description
     - **mobilePhone** - Text of mobile phone number for SMS ie. email where participant gets otp
       - Means of transmission defined in TransferType
 
-  - **status** - <code>DRAFT</code> or <code>PENDING</code>:
+  - **status** - <code>DRAFT</code> or <code>WAITING_FOR_APPROVAL</code>:
     - <code>DRAFT</code> - user can still change campaign
-    - <code>PENDING</code> - user can't change campaign because emails to participants to fill are already been sent
+    - <code>WAITING_FOR_APPROVAL</code> - user sends other user to approve
     - other statuses can't be defined at creation of campaign, only when created
 - ParticipantDataRequiredKeys - Array of ParticipantData fields expected to be in request
 - DeliveryAddresses - Email addresses where campaign changes are sent
@@ -303,7 +452,7 @@ Parameter | Default | Description
 
 ```json
 {
-  "status": "PENDING"
+  "status": "WAITING_FOR_APPROVAL"
 }
 ```
 
@@ -321,7 +470,7 @@ Parameter | Default | Description
       "Content":"Campaign Test Content"
     }
   },
-  "Status": "PENDING",
+  "Status": "WAITING_FOR_APPROVAL",
   "Participants": [
     {
       "Id": "Participant_example_id_1",
@@ -349,7 +498,31 @@ Parameter | Default | Description
     }
   ],
   "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": []
+  "DeliveryAddresses": [],
+  "ParticipantDataRequiredKeys": [],
+      "DeliveryAddresses": ["example@vizibit.eu"],
+      "Approver": {
+      "Id": "Id_1",
+      "ExternalId": "External_example_1",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example1@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+      },
+
+      "ApproverId": "Id_1",
+      "Owner": {
+      "Id": "Id_2",
+      "ExternalId": "External_example_2",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example2@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+       },
+      "OwnerId": "Id_2"
+      }
 }
 ```
 
@@ -382,9 +555,11 @@ Parameter | Default | Description
   - Subject - Email subject
   - Content - Text contained in email
 
-  - status - <code>DRAFT</code>, <code>PENDING</code>, <code>ERROR</code>, <code>FINISHED</code>, <code>DELETED</code>, <code>ARCHIVED</code>, <code>TERMINATED</code>:
+  - status - <code>DRAFT</code>, <code>WAITING_FOR_APPROVAL</code>, <code>PENDING</code>, <code>ERROR</code>, <code>FINISHED</code>, <code>DELETED</code>, <code>ARCHIVED</code>, <code>TERMINATED</code>:
     - <code>DRAFT</code> - user can still change campaign
-      - can change to <code>DRAFT</code>, <code>PENDING</code>, <code>DELETED</code>, <code>ERROR</code>
+      - can change to <code>DRAFT</code>, <code>WAITING_FOR_APPROVAL</code>, <code>DELETED</code>, <code>ERROR</code>
+    - <code>WAITING_FOR_APPROVAL</code> - user can approve or reject campaign - **SEPARATE METHODS**
+      - can change to <code>DRAFT</code>, <code>WAITING_FOR_APPROVAL</code>, <code>PENDING</code>, <code>ERROR</code>, <code>DELETED</code>
     - <code>PENDING</code> - user can't change campaign because emails are sent to participants
       - can change to <code>PENDING</code>, <code>ERROR</code>, <code>DELETED</code>, <code>ARCHIVED</code>, <code>FINISHED</code>, <code>TERMINATED</code>
     - <code>ERROR</code> - error accrued - final state
@@ -392,7 +567,7 @@ Parameter | Default | Description
       - can change to <code>FINISHED</code>, <code>DELETED</code>, <code>ARCHIVED</code>
     - <code>ARCHIVED</code> - admin changed campaign status so it is visible only when asked for
 
-![Campaign state machine](images/Campaign_state_machine.png)
+![Campaign state machine](images/Campaign_approval_state_machine.png)
 
 
 ### Update Campaign Participant
@@ -439,6 +614,218 @@ Parameter | Default | Description
 
 
 ![Participant state machine](images/Participant_state_machine.png)
+
+### Approve Campaign
+
+> JSON body request example:
+
+```json
+{
+  "Reason":"",
+  "Rejected":false
+}
+```
+
+> If successful the above command returns JSON structured like this:
+
+```json
+{
+  "Id": "Campaign_example_id",
+  "StartedAt": 1638798772,
+  "ValidUntil": 1641390772,
+  "Name": "Test campaign",
+  "TransferTemplate": {
+    "EN": {
+      "Subject":"Campaign Test Subject",
+      "Content":"Campaign Test Content"
+    }
+  },
+  "Status": "PENDING",
+  "Participants": [
+    {
+      "Id": "Participant_example_id_1",
+      "CampaignId": "Campaign_example_id",
+      "Status": "SEND",
+      "TransferLanguage": "EN",
+      "TransferType": "EMAIL",
+      "TransferIdentifier": "example@vizibit.eu",
+      "ParticipantData": {
+        "mobilePhone": "example@vizibit.eu"
+      },
+      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+    },
+    {
+      "Id": "Participant_example_id_2",
+      "CampaignId": "Campaign_example_id",
+      "Status": "SEND",
+      "TransferLanguage": "EN",
+      "TransferType": "SMS",
+      "TransferIdentifier": "example@vizibit.eu",
+      "ParticipantData": {
+        "mobilePhone": "+29910236548"
+      },
+      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+    }
+  ],
+  "ParticipantDataRequiredKeys": [],
+  "DeliveryAddresses": [],
+  "ParticipantDataRequiredKeys": [],
+      "DeliveryAddresses": ["example@vizibit.eu"],
+      "Approver": {
+      "Id": "Id_1",
+      "ExternalId": "External_example_1",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example1@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+      },
+
+      "ApproverId": "Id_1",
+      "Owner": {
+      "Id": "Id_2",
+      "ExternalId": "External_example_2",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example2@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+       },
+      "OwnerId": "Id_2"
+      }
+}
+```
+
+Only for **Approver**.
+Changes campaigns which **STATUS** is **<code>WAITING_FOR_APPROVAL</code>** to status **<code>PENDING</code>**.
+
+
+**HTTP Request**
+
+`PUT {{GATEWAYHOST}}/v/1/campaign/{id}/approval/give`
+
+**Route Values**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+id |  | Id of the campaign requested in call.
+
+**Query Parameters**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+**authorization_key** |  | Indicates the user and his authorities.
+
+**Body input**
+
+- **Reason** - reason why user approves
+- Rejected - boolean - default <code>false</code>
+
+### Reject Campaign
+
+> JSON body request example:
+
+```json
+{
+  "Reason":"",
+  "Rejected":true
+}
+```
+
+> If successful the above command returns JSON structured like this:
+
+```json
+{
+  "Id": "Campaign_example_id",
+  "StartedAt": 1638798772,
+  "ValidUntil": 1641390772,
+  "Name": "Test campaign",
+  "TransferTemplate": {
+    "EN": {
+      "Subject":"Campaign Test Subject",
+      "Content":"Campaign Test Content"
+    }
+  },
+  "Status": "DRAFT",
+  "Participants": [
+    {
+      "Id": "Participant_example_id_1",
+      "CampaignId": "Campaign_example_id",
+      "Status": "SEND",
+      "TransferLanguage": "EN",
+      "TransferType": "EMAIL",
+      "TransferIdentifier": "example@vizibit.eu",
+      "ParticipantData": {
+        "mobilePhone": "example@vizibit.eu"
+      },
+      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+    },
+    {
+      "Id": "Participant_example_id_2",
+      "CampaignId": "Campaign_example_id",
+      "Status": "SEND",
+      "TransferLanguage": "EN",
+      "TransferType": "SMS",
+      "TransferIdentifier": "example@vizibit.eu",
+      "ParticipantData": {
+        "mobilePhone": "+29910236548"
+      },
+      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+    }
+  ],
+  "ParticipantDataRequiredKeys": [],
+  "DeliveryAddresses": [],
+  "ParticipantDataRequiredKeys": [],
+      "DeliveryAddresses": ["example@vizibit.eu"],
+      "Approver": {
+      "Id": "Id_1",
+      "ExternalId": "External_example_1",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example1@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+      },
+
+      "ApproverId": "Id_1",
+      "Owner": {
+      "Id": "Id_2",
+      "ExternalId": "External_example_2",
+      "FirstName": "...",
+      "LastName": "...",
+      "Email": "example2@vizibit.eu",
+      "LoginType": "LDAP",
+      "Status": "ACTIVE"
+       },
+      "OwnerId": "Id_2"
+      }
+}
+```
+
+Only for **Approver**.
+Changes campaigns which **STATUS** is **<code>WAITING_FOR_APPROVAL</code>** to status **<code>DRAFT</code>**.
+
+**HTTP Request**
+
+`PUT {{GATEWAYHOST}}/v/1/campaign/{id}`
+
+**Route Values**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+id |  | Id of the campaign requested in call.
+
+**Query Parameters**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+**authorization_key** |  | Indicates the user and his authorities.
+
+**Body input**
+
+- **Reason** - reason why user approves
+- Rejected - boolean - default <code>false</code>
+
 
 ### Get report for Campaigns
 
