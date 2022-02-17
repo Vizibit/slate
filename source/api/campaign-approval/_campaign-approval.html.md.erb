@@ -32,20 +32,17 @@ Parameter | Value
 
 ```json
 {
-  "user":
-  {
-  "Id": "8e7c1d26-52f5-44e5-aa00-1d5fcfdea690",
-  "ExternalId": "jmaric",
-  "FirstName": "Josip",
-  "LastName": "Marić",
-  "Email": "josip.maric@vizibit.hr",
-  "LoginType": "LDAP",
-  "Status": "ACTIVE"
-  },
-  "token":"..."
-
+    "user": {
+        "Id": "8e7c1d26-52f5-44e5-aa00-1d5fcfdea690",
+        "ExternalId": "example_1",
+        "FirstName": "example",
+        "LastName": "example",
+        "Email": "example@vizibit.hr",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
+    "token": "..."
 }
-
 ```
 
 This endpoint returns data about user. Retrieved token has limited expiration time.
@@ -60,43 +57,39 @@ This endpoint returns data about user. Retrieved token has limited expiration ti
 
 ```json
 {
-  "page": 1,
-  "perPage": 12,
-  "pages": 1,
-  "total": 2,
-  "count": 2,
-  "type": "User",
-  "results": [
-    {
-    "Id": "Id_1",
-    "ExternalId": "External_example_1",
-    "FirstName": "...",
-    "LastName": "...",
-    "Email": "example1@vizibit.eu",
-    "LoginType": "LDAP",
-    "Status": "ACTIVE"
-    },
-    {
-    "Id": "Id_2",
-    "ExternalId": "External_example_2",
-    "FirstName": "...",
-    "LastName": "...",
-    "Email": "example2@vizibit.eu",
-    "LoginType": "LDAP",
-    "Status": "ACTIVE"
+    "page": 1,
+    "perPage": 12,
+    "pages": 1,
+    "total": 2,
+    "count": 2,
+    "type": "User",
+    "results": [
+        {
+            "Id": "Id_1",
+            "ExternalId": "External_example_1",
+            "FirstName": "...",
+            "LastName": "...",
+            "Email": "example1@vizibit.eu",
+            "LoginType": "LDAP",
+            "Status": "ACTIVE"
+        },
+        {
+            "Id": "Id_2",
+            "ExternalId": "External_example_2",
+            "FirstName": "...",
+            "LastName": "...",
+            "Email": "example2@vizibit.eu",
+            "LoginType": "LDAP",
+            "Status": "ACTIVE"
+        }
     }
-}
 ```
 
 This endpoint retrieves user list.
 
-`GET {{GATEWAYHOST}}/v/1/campaign/{id}`
+`GET {{GATEWAYHOST}}/v/1/campaign/user`
 
 **Route Values**
-
-Parameter | Default | Description
---------- | ------- | -----------
-id |  | Id of the campaign requested in call.
 
 **Query Parameters**
 
@@ -110,78 +103,78 @@ Parameter | Default | Description
 
 ```json
 {
-  "page": 1,
-  "perPage": 12,
-  "pages": 4,
-  "total": 37,
-  "count": 12,
-  "type": "Campaign",
-  "results": [
-    {
-      "Id": "Campaign_example_id",
-      "StartedAt": 1636636239,
-      "ValidUntil": 1639228239,
-      "Name": "New campaign",
-      "TransferTemplate": {
-        "EN": {
-          "Subject": "Email subject",
-          "Content": "Text sent in email"
-        },
-        "DE": {
-          "Subject": "...",
-          "Content": "..."
-        },
-        "IT": {
-          "Subject": "...",
-          "Content": "..."
-        },
-        "FR": {
-          "Subject": "...",
-          "Content": "..."
-        }
-      },
-      "Status": "PENDING",
-      "Participants": [
-          {
-            "Id": "Participant_example_id_1",
-            "CampaignId": "Campaign_example_id",
-            "Status": "CREATED",
-            "TransferLanguage": "EN",
-            "TransferType": "EMAIL",
-            "TransferIdentifier": "example@vizibit.eu",
-            "ParticipantData": {
-              "mobilePhone": "example@vizibit.eu"
+    "page": 1,
+    "perPage": 12,
+    "pages": 4,
+    "total": 37,
+    "count": 12,
+    "type": "Campaign",
+    "results": [
+        {
+            "Id": "Campaign_example_id",
+            "StartedAt": 1636636239,
+            "ValidUntil": 1639228239,
+            "Name": "New campaign",
+            "TransferTemplate": {
+                "EN": {
+                    "Subject": "Email subject",
+                    "Content": "Text sent in email"
+                },
+                "DE": {
+                    "Subject": "...",
+                    "Content": "..."
+                },
+                "IT": {
+                    "Subject": "...",
+                    "Content": "..."
+                },
+                "FR": {
+                    "Subject": "...",
+                    "Content": "..."
+                }
             },
-            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
-          }
-      ],
-      "ParticipantDataRequiredKeys": [],
-      "DeliveryAddresses": ["example@vizibit.eu"],
-      "Approver": {
-      "Id": "Id_1",
-      "ExternalId": "External_example_1",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example1@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-      },
-
-      "ApproverId": "Id_1",
-      "Owner": {
-      "Id": "Id_2",
-      "ExternalId": "External_example_2",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example2@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-       },
-      "OwnerId": "Id_2"
-    }
-  ]
+            "Status": "PENDING",
+            "Participants": [
+                {
+                    "Id": "Participant_example_id_1",
+                    "CampaignId": "Campaign_example_id",
+                    "Status": "CREATED",
+                    "TransferLanguage": "EN",
+                    "TransferType": "EMAIL",
+                    "TransferIdentifier": "example@vizibit.eu",
+                    "ParticipantData": {
+                        "mobilePhone": "example@vizibit.eu"
+                    },
+                    "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+                }
+            ],
+            "ParticipantDataRequiredKeys": [],
+            "DeliveryAddresses": [
+                "example@vizibit.eu"
+            ],
+            "Approver": {
+                "Id": "Id_1",
+                "ExternalId": "External_example_1",
+                "FirstName": "...",
+                "LastName": "...",
+                "Email": "example1@vizibit.eu",
+                "LoginType": "LDAP",
+                "Status": "ACTIVE"
+            },
+            "ApproverId": "Id_1",
+            "Owner": {
+                "Id": "Id_2",
+                "ExternalId": "External_example_2",
+                "FirstName": "...",
+                "LastName": "...",
+                "Email": "example2@vizibit.eu",
+                "LoginType": "LDAP",
+                "Status": "ACTIVE"
+            },
+            "OwnerId": "Id_2"
+        }
+    ]
 }
-
 ```
 
 This endpoint retrieves all campaigns that require parameters in the query for which the user is marked as owner or approver.
@@ -206,79 +199,80 @@ perPage | 12 | Maximal number of campaigns returned in each page.
 
 ```json
 {
-  "Id": "Campaign_example_id",
-  "StartedAt": 1634821121,
-  "ValidUntil": 1637413121,
-  "Name": "Test campaign",
-  "TransferTemplate": {
-    "EN": {
-      "Subject": "Email subject",
-      "Content": "Text sent in email"
+    "Id": "Campaign_example_id",
+    "StartedAt": 1634821121,
+    "ValidUntil": 1637413121,
+    "Name": "Test campaign",
+    "TransferTemplate": {
+        "EN": {
+            "Subject": "Email subject",
+            "Content": "Text sent in email"
+        },
+        "DE": {
+            "Subject": "...",
+            "Content": "..."
+        },
+        "IT": {
+            "Subject": "...",
+            "Content": "..."
+        },
+        "FR": {
+            "Subject": "...",
+            "Content": "..."
+        }
     },
-    "DE": {
-      "Subject": "...",
-      "Content": "..."
+    "Status": "DRAFT",
+    "Participants": [
+        {
+            "Id": "Participant_example_id_1",
+            "CampaignId": "Campaign_example_id",
+            "Status": "CREATED",
+            "TransferLanguage": "EN",
+            "TransferType": "EMAIL",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "example@vizibit.eu"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+        },
+        {
+            "Id": "Participant_example_id_2",
+            "CampaignId": "Campaign_example_id",
+            "Status": "CREATED",
+            "TransferLanguage": "EN",
+            "TransferType": "SMS",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "+29910236548"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+        }
+    ],
+    "ParticipantDataRequiredKeys": [],
+    "DeliveryAddresses": [
+        "example@vizibit.eu"
+    ],
+    "Approver": {
+        "Id": "Id_1",
+        "ExternalId": "External_example_1",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example1@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
     },
-    "IT": {
-      "Subject": "...",
-      "Content": "..."
+    "ApproverId": "Id_1",
+    "Owner": {
+        "Id": "Id_2",
+        "ExternalId": "External_example_2",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example2@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
     },
-    "FR": {
-      "Subject": "...",
-      "Content": "..."
-    }
-  },
-  "Status": "DRAFT",
-  "Participants": [
-    {
-      "Id": "Participant_example_id_1",
-      "CampaignId": "Campaign_example_id",
-      "Status": "CREATED",
-      "TransferLanguage": "EN",
-      "TransferType": "EMAIL",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "example@vizibit.eu"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
-    },
-    {
-      "Id": "Participant_example_id_2",
-      "CampaignId": "Campaign_example_id",
-      "Status": "CREATED",
-      "TransferLanguage": "EN",
-      "TransferType": "SMS",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "+29910236548"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
-    }
-  ],
-  "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": ["example@vizibit.eu"],
-  "Approver": {
-  "Id": "Id_1",
-  "ExternalId": "External_example_1",
-  "FirstName": "...",
-  "LastName": "...",
-  "Email": "example1@vizibit.eu",
-  "LoginType": "LDAP",
-  "Status": "ACTIVE"
-  },
-
-  "ApproverId": "Id_1",
-  "Owner": {
-  "Id": "Id_2",
-  "ExternalId": "External_example_2",
-  "FirstName": "...",
-  "LastName": "...",
-  "Email": "example2@vizibit.eu",
-  "LoginType": "LDAP",
-  "Status": "ACTIVE"
-   },
-  "OwnerId": "Id_2"
-  }
+    "OwnerId": "Id_2"
+}
 ```
 
 This endpoint retrieves a specific campaign.
@@ -303,40 +297,42 @@ Parameter | Default | Description
 
 ```json
 {
-  "name": "Test campaign",
-  "transferTemplate": {
-    "EN": {
-      "Subject":"Campaign Test Subject",
-      "Content":"Campaign Test Content"
-    }
-  },
-  "Participants": [
-    {
-      "Status": "CREATED",
-      "TransferLanguage": "EN",
-      "TransferType": "EMAIL",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "example@vizibit.eu"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+    "name": "Test campaign",
+    "transferTemplate": {
+        "EN": {
+            "Subject": "Campaign Test Subject",
+            "Content": "Campaign Test Content"
+        }
     },
-    {
-      "Status": "CREATED",
-      "TransferLanguage": "EN",
-      "TransferType": "SMS",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "+29910236548"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
-    }],
-  "status": "DRAFT",
+    "Participants": [
+        {
+            "Status": "CREATED",
+            "TransferLanguage": "EN",
+            "TransferType": "EMAIL",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "example@vizibit.eu"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+        },
+        {
+            "Status": "CREATED",
+            "TransferLanguage": "EN",
+            "TransferType": "SMS",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "+29910236548"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+        }
+    ],
+    "status": "DRAFT",
     "ParticipantDataRequiredKeys": [],
-    "DeliveryAddresses": ["example@vizibit.eu"],
+    "DeliveryAddresses": [
+        "example@vizibit.eu"
+    ],
     "ApproverId": "Id_1",
     "OwnerId": "Id_2"
-    }
 }
 ```
 
@@ -344,69 +340,67 @@ Parameter | Default | Description
 
 ```json
 {
-  "Id": "Campaign_example_id",
-  "StartedAt": 1638798772,
-  "ValidUntil": 1641390772,
-  "Name": "Test campaign",
-  "TransferTemplate": {
-    "EN": {
-      "Subject":"Campaign Test Subject",
-      "Content":"Campaign Test Content"
-    }
-  },
-  "Status": "DRAFT",
-  "Participants": [
-      {
-        "Id": "Participant_example_id_1",
-        "CampaignId": "Campaign_example_id",
-        "Status": "CREATED",
-        "TransferLanguage": "EN",
-        "TransferType": "EMAIL",
-        "TransferIdentifier": "example@vizibit.eu",
-        "ParticipantData": {
-          "mobilePhone": "example@vizibit.eu"
-        },
-        "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
-      },
-      {
-        "Id": "Participant_example_id_2",
-        "CampaignId": "Campaign_example_id",
-        "Status": "CREATED",
-        "TransferLanguage": "EN",
-        "TransferType": "SMS",
-        "TransferIdentifier": "example@vizibit.eu",
-        "ParticipantData": {
-          "mobilePhone": "+29910236548"
-        },
-        "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
-      }
-  ],
-  "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": [],
-    "ParticipantDataRequiredKeys": [],
-    "DeliveryAddresses": ["example@vizibit.eu"],
-    "Approver": {
-    "Id": "Id_1",
-    "ExternalId": "External_example_1",
-    "FirstName": "...",
-    "LastName": "...",
-    "Email": "example1@vizibit.eu",
-    "LoginType": "LDAP",
-    "Status": "ACTIVE"
+    "Id": "Campaign_example_id",
+    "StartedAt": 1638798772,
+    "ValidUntil": 1641390772,
+    "Name": "Test campaign",
+    "TransferTemplate": {
+        "EN": {
+            "Subject": "Campaign Test Subject",
+            "Content": "Campaign Test Content"
+        }
     },
-
+    "Status": "DRAFT",
+    "Participants": [
+        {
+            "Id": "Participant_example_id_1",
+            "CampaignId": "Campaign_example_id",
+            "Status": "CREATED",
+            "TransferLanguage": "EN",
+            "TransferType": "EMAIL",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "example@vizibit.eu"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+        },
+        {
+            "Id": "Participant_example_id_2",
+            "CampaignId": "Campaign_example_id",
+            "Status": "CREATED",
+            "TransferLanguage": "EN",
+            "TransferType": "SMS",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "+29910236548"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+        }
+    ],
+    "ParticipantDataRequiredKeys": [],
+    "DeliveryAddresses": [
+        "example@vizibit.eu"
+    ],
+    "Approver": {
+        "Id": "Id_1",
+        "ExternalId": "External_example_1",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example1@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
     "ApproverId": "Id_1",
     "Owner": {
-    "Id": "Id_2",
-    "ExternalId": "External_example_2",
-    "FirstName": "...",
-    "LastName": "...",
-    "Email": "example2@vizibit.eu",
-    "LoginType": "LDAP",
-    "Status": "ACTIVE"
-     },
+        "Id": "Id_2",
+        "ExternalId": "External_example_2",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example2@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
     "OwnerId": "Id_2"
-    }
 }
 ```
 
@@ -444,6 +438,8 @@ Parameter | Default | Description
     - other statuses can't be defined at creation of campaign, only when created
 - ParticipantDataRequiredKeys - Array of ParticipantData fields expected to be in request
 - DeliveryAddresses - Email addresses where campaign changes are sent
+- **ApproverId** - The approver id must be defined, and it needs to be filled with a id from the GET users API call
+- **OwnerId** -  The **OwnerId** always defaults to calling user id, but for API calls with ADMIN permission the user can define an alternative **OwnerId**. If the calling user **is not an ADMIN** the OwnerId field is **ignored.**
 
 
 ### Update Campaign
@@ -460,69 +456,68 @@ Parameter | Default | Description
 
 ```json
 {
-  "Id": "Campaign_example_id",
-  "StartedAt": 1638798772,
-  "ValidUntil": 1641390772,
-  "Name": "Test campaign",
-  "TransferTemplate": {
-    "EN": {
-      "Subject":"Campaign Test Subject",
-      "Content":"Campaign Test Content"
-    }
-  },
-  "Status": "WAITING_FOR_APPROVAL",
-  "Participants": [
-    {
-      "Id": "Participant_example_id_1",
-      "CampaignId": "Campaign_example_id",
-      "Status": "SEND",
-      "TransferLanguage": "EN",
-      "TransferType": "EMAIL",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "example@vizibit.eu"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+    "Id": "Campaign_example_id",
+    "StartedAt": 1638798772,
+    "ValidUntil": 1641390772,
+    "Name": "Test campaign",
+    "TransferTemplate": {
+        "EN": {
+            "Subject": "Campaign Test Subject",
+            "Content": "Campaign Test Content"
+        }
     },
-    {
-      "Id": "Participant_example_id_2",
-      "CampaignId": "Campaign_example_id",
-      "Status": "SEND",
-      "TransferLanguage": "EN",
-      "TransferType": "SMS",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "+29910236548"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
-    }
-  ],
-  "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": [],
-  "ParticipantDataRequiredKeys": [],
-      "DeliveryAddresses": ["example@vizibit.eu"],
-      "Approver": {
-      "Id": "Id_1",
-      "ExternalId": "External_example_1",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example1@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-      },
-
-      "ApproverId": "Id_1",
-      "Owner": {
-      "Id": "Id_2",
-      "ExternalId": "External_example_2",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example2@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-       },
-      "OwnerId": "Id_2"
-      }
+    "Status": "WAITING_FOR_APPROVAL",
+    "Participants": [
+        {
+            "Id": "Participant_example_id_1",
+            "CampaignId": "Campaign_example_id",
+            "Status": "SEND",
+            "TransferLanguage": "EN",
+            "TransferType": "EMAIL",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "example@vizibit.eu"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+        },
+        {
+            "Id": "Participant_example_id_2",
+            "CampaignId": "Campaign_example_id",
+            "Status": "SEND",
+            "TransferLanguage": "EN",
+            "TransferType": "SMS",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "+29910236548"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+        }
+    ],
+    "ParticipantDataRequiredKeys": [],
+    "DeliveryAddresses": [
+        "example@vizibit.eu"
+    ],
+    "Approver": {
+        "Id": "Id_1",
+        "ExternalId": "External_example_1",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example1@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
+    "ApproverId": "Id_1",
+    "Owner": {
+        "Id": "Id_2",
+        "ExternalId": "External_example_2",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example2@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
+    "OwnerId": "Id_2"
+}
 }
 ```
 
@@ -621,8 +616,7 @@ Parameter | Default | Description
 
 ```json
 {
-  "Reason":"",
-  "Rejected":false
+  "Reason":"Approval reason",
 }
 ```
 
@@ -630,69 +624,67 @@ Parameter | Default | Description
 
 ```json
 {
-  "Id": "Campaign_example_id",
-  "StartedAt": 1638798772,
-  "ValidUntil": 1641390772,
-  "Name": "Test campaign",
-  "TransferTemplate": {
-    "EN": {
-      "Subject":"Campaign Test Subject",
-      "Content":"Campaign Test Content"
-    }
-  },
-  "Status": "PENDING",
-  "Participants": [
-    {
-      "Id": "Participant_example_id_1",
-      "CampaignId": "Campaign_example_id",
-      "Status": "SEND",
-      "TransferLanguage": "EN",
-      "TransferType": "EMAIL",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "example@vizibit.eu"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+    "Id": "Campaign_example_id",
+    "StartedAt": 1638798772,
+    "ValidUntil": 1641390772,
+    "Name": "Test campaign",
+    "TransferTemplate": {
+        "EN": {
+            "Subject": "Campaign Test Subject",
+            "Content": "Campaign Test Content"
+        }
     },
-    {
-      "Id": "Participant_example_id_2",
-      "CampaignId": "Campaign_example_id",
-      "Status": "SEND",
-      "TransferLanguage": "EN",
-      "TransferType": "SMS",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "+29910236548"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
-    }
-  ],
-  "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": [],
-  "ParticipantDataRequiredKeys": [],
-      "DeliveryAddresses": ["example@vizibit.eu"],
-      "Approver": {
-      "Id": "Id_1",
-      "ExternalId": "External_example_1",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example1@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-      },
-
-      "ApproverId": "Id_1",
-      "Owner": {
-      "Id": "Id_2",
-      "ExternalId": "External_example_2",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example2@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-       },
-      "OwnerId": "Id_2"
-      }
+    "Status": "PENDING",
+    "Participants": [
+        {
+            "Id": "Participant_example_id_1",
+            "CampaignId": "Campaign_example_id",
+            "Status": "SEND",
+            "TransferLanguage": "EN",
+            "TransferType": "EMAIL",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "example@vizibit.eu"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+        },
+        {
+            "Id": "Participant_example_id_2",
+            "CampaignId": "Campaign_example_id",
+            "Status": "SEND",
+            "TransferLanguage": "EN",
+            "TransferType": "SMS",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "+29910236548"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+        }
+    ],
+    "ParticipantDataRequiredKeys": [],
+    "DeliveryAddresses": [
+        "example@vizibit.eu"
+    ],
+    "Approver": {
+        "Id": "Id_1",
+        "ExternalId": "External_example_1",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example1@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
+    "ApproverId": "Id_1",
+    "Owner": {
+        "Id": "Id_2",
+        "ExternalId": "External_example_2",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example2@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
+    "OwnerId": "Id_2"
 }
 ```
 
@@ -719,7 +711,6 @@ Parameter | Default | Description
 **Body input**
 
 - **Reason** - reason why user approves
-- Rejected - boolean - default <code>false</code>
 
 ### Reject Campaign
 
@@ -727,8 +718,7 @@ Parameter | Default | Description
 
 ```json
 {
-  "Reason":"",
-  "Rejected":true
+  "Reason":"Rejection reason"
 }
 ```
 
@@ -736,69 +726,67 @@ Parameter | Default | Description
 
 ```json
 {
-  "Id": "Campaign_example_id",
-  "StartedAt": 1638798772,
-  "ValidUntil": 1641390772,
-  "Name": "Test campaign",
-  "TransferTemplate": {
-    "EN": {
-      "Subject":"Campaign Test Subject",
-      "Content":"Campaign Test Content"
-    }
-  },
-  "Status": "DRAFT",
-  "Participants": [
-    {
-      "Id": "Participant_example_id_1",
-      "CampaignId": "Campaign_example_id",
-      "Status": "SEND",
-      "TransferLanguage": "EN",
-      "TransferType": "EMAIL",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "example@vizibit.eu"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+    "Id": "Campaign_example_id",
+    "StartedAt": 1638798772,
+    "ValidUntil": 1641390772,
+    "Name": "Test campaign",
+    "TransferTemplate": {
+        "EN": {
+            "Subject": "Campaign Test Subject",
+            "Content": "Campaign Test Content"
+        }
     },
-    {
-      "Id": "Participant_example_id_2",
-      "CampaignId": "Campaign_example_id",
-      "Status": "SEND",
-      "TransferLanguage": "EN",
-      "TransferType": "SMS",
-      "TransferIdentifier": "example@vizibit.eu",
-      "ParticipantData": {
-        "mobilePhone": "+29910236548"
-      },
-      "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
-    }
-  ],
-  "ParticipantDataRequiredKeys": [],
-  "DeliveryAddresses": [],
-  "ParticipantDataRequiredKeys": [],
-      "DeliveryAddresses": ["example@vizibit.eu"],
-      "Approver": {
-      "Id": "Id_1",
-      "ExternalId": "External_example_1",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example1@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-      },
-
-      "ApproverId": "Id_1",
-      "Owner": {
-      "Id": "Id_2",
-      "ExternalId": "External_example_2",
-      "FirstName": "...",
-      "LastName": "...",
-      "Email": "example2@vizibit.eu",
-      "LoginType": "LDAP",
-      "Status": "ACTIVE"
-       },
-      "OwnerId": "Id_2"
-      }
+    "Status": "DRAFT",
+    "Participants": [
+        {
+            "Id": "Participant_example_id_1",
+            "CampaignId": "Campaign_example_id",
+            "Status": "SEND",
+            "TransferLanguage": "EN",
+            "TransferType": "EMAIL",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "example@vizibit.eu"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_1&language=EN"
+        },
+        {
+            "Id": "Participant_example_id_2",
+            "CampaignId": "Campaign_example_id",
+            "Status": "SEND",
+            "TransferLanguage": "EN",
+            "TransferType": "SMS",
+            "TransferIdentifier": "example@vizibit.eu",
+            "ParticipantData": {
+                "mobilePhone": "+29910236548"
+            },
+            "EntityLink": "{{GATEWAYHOST}}/residence?cid=Campaign_example_id&pid=Participant_example_id_2&language=EN"
+        }
+    ],
+    "ParticipantDataRequiredKeys": [],
+    "DeliveryAddresses": [
+        "example@vizibit.eu"
+    ],
+    "Approver": {
+        "Id": "Id_1",
+        "ExternalId": "External_example_1",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example1@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
+    "ApproverId": "Id_1",
+    "Owner": {
+        "Id": "Id_2",
+        "ExternalId": "External_example_2",
+        "FirstName": "...",
+        "LastName": "...",
+        "Email": "example2@vizibit.eu",
+        "LoginType": "LDAP",
+        "Status": "ACTIVE"
+    },
+    "OwnerId": "Id_2"
 }
 ```
 
@@ -895,7 +883,7 @@ Error Code | Meaning
 22005 | Campaign not found
 22006 | Campaign participant not found
 22007 | Unable to update campaign
-22008 | Created campaign can only be DRAFT or PENDING
+22008 | Created campaign can only be DRAFT or WAITING_FOR_APPROVAL
 22009 | Cannot change campaign status from 'PENDING' to 'DRAFT'
 22010 | Cannot change campaign participant status from 'READ' to 'SENT'
 22011 | Cannot update non PENDING campaign
@@ -912,5 +900,11 @@ Error Code | Meaning
 22022 | Campaign has finished
 22023 | Not existing report type.
 22024 | Missing properties for column names.
+22025 | The logged user doesn't have the rights to approve the current campaign.
+22026 | Campaigns has to have a campaign approver.
+22027 | Campaign user not found.
+22028 | Campaign approver cannot be the same as the campaign owner.
+22029 | Call the approval endpoints to approve the campaigns. Cannot update to PENDING.
+22030 | Approval is only allowed on campaigns that have a status WAITING_FOR_APPROVAL.
 
 In case of an error, the processing is interrupted and the error response is returned to the caller.
