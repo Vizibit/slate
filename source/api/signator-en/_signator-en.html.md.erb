@@ -85,13 +85,11 @@ The advantages of this integration model are:
 
 ![Representation of the integration model for e-Signature](https://mobile.signator.hr/img/slika_3_api_doc.png)
 
+### Model description from the SystemX perspective (SystemX → Signator)
+
 Definition of the Signator interface for the e-Signature can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration).
 
 #### Function: StartApprovalProcess
-
-- SystemX sends a document to be digitally signed by one or more persons to Signator system
-
-`POST {{GATEWAYHOST}}/v/1/document/`
 
 > JSON Body input:
 
@@ -129,8 +127,7 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
       "attributeKey": "string",
       "attributeValue": "string"
     }
-  ],
-  "addElectronicSealToFinishedDocument": "bool"
+  ]
 }
 ```
 
@@ -138,10 +135,31 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
 
 ```json
 {
-    "documentId": 123,
-    "documentUrl": "esign.example.com/#/v/1/document/3"
+  "documentId": 123,
+  "documentUrl": "esign.example.com/#/v/1/document/3"
 }
 ```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- SystemX sends a document to be digitally signed by one or more persons to Signator system
+
+`POST {{GATEWAYHOST}}/v/1/document/`
+
 **Query Parameters**
 
 Parameter | Default | Description
@@ -160,17 +178,17 @@ Parameter | Default | Description
     - &quot;participants&quot; - [email, role, signatureLevel, signatureImage] - list of signers defined in sequential order (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
       - &quot;email&quot;\* - email address of the signer
       - &quot;role&quot; \* - role of the signer - APPROVER, SIGNER
-        - Note: if APPROVER is sent, then the option &quot;SES&quot; must be selected in signature level
+          - Note: if APPROVER is sent, then the option &quot;SES&quot; must be selected in signature level
       - &quot;signatureLevel&quot;\*
-        - signatureLevel possible values: &quot;QES&quot; (qualified signature), &quot;AES&quot; (advanced signature), &quot;SES&quot; (stamp). Applies to the SIGNER role only.
+          - signatureLevel possible values: &quot;QES&quot; (qualified signature), &quot;AES&quot; (advanced signature), &quot;SES&quot; (stamp). Applies to the SIGNER role only.
       - [&quot;SignatureImage&quot; - signature image with values:](#positioning-of-the-signature-image-seal)
-        - &quot;page&quot;\* - page of the document on which the signature image will be positioned.
-        - &quot;widgetOffsetX&quot;\* - offset from the lower left corner along the x axis.
-        - &quot;widgetOffsetY&quot;\* - offset from the lower left corner along the y axis.
-        - &quot;widgetWidth&quot;\* - the width of the image widget (if the document has a defined signature field this value is ignored).
-        - &quot;widgetHeight&quot;\* - height of the image widget (if the document has a defined signature field this value is ignored).
-        - &quot;data&quot;\* - signature image in base64 format
-        - &quot;fileType&quot;\* - signature image file type (can be JPEG or PNG)
+          - &quot;page&quot;\* - page of the document on which the signature image will be positioned.
+          - &quot;widgetOffsetX&quot;\* - offset from the lower left corner along the x axis.
+          - &quot;widgetOffsetY&quot;\* - offset from the lower left corner along the y axis.
+          - &quot;widgetWidth&quot;\* - the width of the image widget (if the document has a defined signature field this value is ignored).
+          - &quot;widgetHeight&quot;\* - height of the image widget (if the document has a defined signature field this value is ignored).
+          - &quot;data&quot;\* - signature image in base64 format
+          - &quot;fileType&quot;\* - signature image file type (can be JPEG or PNG)
     - Attachments [file\*, fileType, fileName\*] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
       - &quot;file&quot; - attachment in base64 format
       - &quot;fileType&quot; - document type
@@ -184,15 +202,8 @@ Parameter | Default | Description
 
 ### **Optional functions**
 
-#### Function: ShareFileToRecepient
+#### Function: **ShareFileToRecepient**
 
-Document can be delivered to the user of Signator application for inspection in several ways:
-
-- to his user inbox on Signator portal
-- send e-mail with a link to the document on the Signator portal
-- send e-mail with the document as an attachment
-
-`POST {{GATEWAYHOST}}/v/1/document/delivery/`
 > JSON Body input:
 
 ```json
@@ -224,6 +235,29 @@ Document can be delivered to the user of Signator application for inspection in 
   "documentId": 123
 }
 ```
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+Document can be delivered to the user of Signator application for inspection in several ways:
+
+- to his user inbox on Signator portal
+- send e-mail with a link to the document on the Signator portal
+- send e-mail with the document as an attachment
+
+`POST {{GATEWAYHOST}}/v/1/document/delivery/`
 
 **Query Parameters**
 
@@ -235,7 +269,6 @@ Parameter | Default | Description
   - implemented in: Signator
   - caller: SystemX
   - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration/ShareFileToRecepient)
-
   - input parameters:
     - &quot;file&quot;\* - pdf document in base64 format
     - &quot;fileType&quot; - file type
@@ -250,9 +283,7 @@ Parameter | Default | Description
 
 #### Function: **GetDocumentAttributes**
 
-- Get all document attributes by documentID
-
-`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/attributes/`
+> Input **document_id** in Route
 
 > If successful the above command returns code **200 OK** and JSON body structured like this:
 
@@ -264,6 +295,27 @@ Parameter | Default | Description
   }
 ]
 ```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- Get all document attributes by documentID
+
+`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/attributes/`
+
 **Route Values**
 
 Parameter | Default | Description
@@ -287,10 +339,6 @@ Parameter | Default | Description
 
 #### Function: **GetDocumentStatus**
 
-- Retrieve document statuses by documentID
-
-`POST {{GATEWAYHOST}}/v/1/document/status/`
-
 > JSON Body input:
 
 ```json
@@ -311,6 +359,27 @@ Parameter | Default | Description
 ]
 ```
 
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+
+- Retrieve document statuses by documentID
+
+`POST {{GATEWAYHOST}}/v/1/document/status/`
+
 **Query Parameters**
 
 Parameter | Default | Description
@@ -326,18 +395,16 @@ Parameter | Default | Description
   - output:
     - Status[documentId\*, DocumentStatus] - list of documentIds with their statuses
       - DocumentStatus possible values:
-        - &quot;FINISHED&quot; - all participants signed/approved the document,
-        - &quot;CANCELED&quot; - the initiator of the workflow canceled the workflow,
-        - &quot;REJECTED&quot; - one of the participants of the workflow refused to sign/approve the document ,
-        - &quot;PENDING&quot; - waiting for the action of one of the participants in the workflow,
-        - &quot;DELETED&quot; - the workflow is deleted,
-        - &quot;DRAFT&quot; - the workflow is defined, but there are no participants
+          - &quot;FINISHED&quot; - all participants signed/approved the document,
+          - &quot;CANCELED&quot; - the initiator of the workflow canceled the workflow,
+          - &quot;REJECTED&quot; - one of the participants of the workflow refused to sign/approve the document ,
+          - &quot;PENDING&quot; - waiting for the action of one of the participants in the workflow,
+          - &quot;DELETED&quot; - the workflow is deleted,
+          - &quot;DRAFT&quot; - the workflow is defined, but there are no participants
 
 #### Function: **GetApprovedDocument**
 
-- Get the signed document
-
-`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/`
+> Input **document_id** in Route
 
 > If successful the above command returns code **200 OK** and JSON body structured like this:
 
@@ -347,6 +414,26 @@ Parameter | Default | Description
   "signedFile": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
 }
 ```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- Get the signed document
+
+`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/`
 
 **Route Values**
 
@@ -373,7 +460,6 @@ Parameter | Default | Description
 
 #### Function: **UpdateDocumentAttributes**
 
-- Update document attributes
 
 `PUT {{GATEWAYHOST}}/v/1/document/{{document_id}}/attributes/`
 
@@ -395,6 +481,24 @@ Parameter | Default | Description
   "documentId": 123
 }
 ```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- Update document attributes
 
 **Route Values**
 
@@ -420,8 +524,6 @@ Parameter | Default | Description
 
 
 #### Function: **VerifyDocumentCertificates**
-
-- Function checks if all digital signatures are valid and qualified.
 
 `POST {{GATEWAYHOST}}/v/1/integrator/pdf/signature/certificates/`
 
@@ -453,6 +555,25 @@ Parameter | Default | Description
 }
 ```
 
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- Function checks if all digital signatures are valid and qualified.
+
+
 **Query Parameters**
 
 Parameter | Default | Description
@@ -469,25 +590,24 @@ Parameter | Default | Description
     - &quot;SignatureValid&quot;\* - response whether all signatures are valid
     - &quot;Signatures[]&quot; \* - list of signatures with details for each signature
       - SignatureDetails values:
-        - &quot;Valid&quot; - signature validity
-        - &quot;Timestamped&quot; - whether the signature has a time stamp
-        - &quot;Time&quot; - signature time (if the signature does not have a time stamp, it returns the server time)
-        - &quot;Qualified&quot; - qualification status
-        - &quot;ChainValidationStatus&quot; - chain validation status
-        - &quot;Subject&quot; - signer information
-        - &quot;Status&quot; - signature status
-        - &quot;Type&quot; - signature type
+          - &quot;Valid&quot; - signature validity
+          - &quot;Timestamped&quot; - whether the signature has a time stamp
+          - &quot;Time&quot; - signature time (if the signature does not have a time stamp, it returns the server time)
+          - &quot;Qualified&quot; - qualification status
+          - &quot;ChainValidationStatus&quot; - chain validation status
+          - &quot;Subject&quot; - signer information
+          - &quot;Status&quot; - signature status
+          - &quot;Type&quot; - signature type
 
 #### **Notes**
 
 1. Interfaces use REST for calls to the Signator API
-2. All data exchange is performed using **HTTP,** in **JSON** format.
+2. All data exchange is performed using **HTTP** in **JSON** format.
 
 ### Model description from the Signator perspective (Signator → SystemX)
 Proposal for implementation of the integration interface on the system integrator side can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSignature%20Integration).
 
 #### Function: **FinishApprovalProcess**
-After the document is digitally signed, Signator calls the function on the SystemX side to pass it the digitally signed document
 
 `POST {{GATEWAYHOST}}/v/1/document/`
 
@@ -516,6 +636,23 @@ After the document is digitally signed, Signator calls the function on the Syste
   "documentId": 123
 }
 ```
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+After the document is digitally signed, Signator calls the function on the SystemX side to pass it the digitally signed document.
 
 **Query Parameters**
 
@@ -532,16 +669,15 @@ Parameter | Default | Description
   - &quot;documentUrl&quot;\* - the path of the digitally signed document. digitally signed document can be opened from SystemX by opening the path of a specific document. The document can be seen by a person if he/she is a participant in the digital signing workflow or the document has been shared with him/her.
   - &quot;SignedFile&quot;\* - digitally signed document in the form of base64
   - &quot;status&quot;\* - document status for documentId
-    - DocumentStatus possible values:
-      - &quot;FINISHED&quot; - all participants signed/approved the document,
-      - &quot;CANCELED&quot; - the initiator of the workflow canceled the workflow,
-      - &quot;REJECTED &quot;- one of the participants in the workflow refused to sign/approve the document
+      - DocumentStatus possible values:
+          - &quot;FINISHED&quot; - all participants signed/approved the document,
+          - &quot;CANCELED&quot; - the initiator of the workflow canceled the workflow,
+          - &quot;REJECTED &quot;- one of the participants in the workflow refused to sign/approve the document
   - DocumentAttributes\* [attributeKey, attributeValue] - list of attribute names of the digitally signed document and their values.
 - output:
   - &quot; documentId&quot;\* - Document ID in Signator system
 
 #### Function: **GetDocumentAttributes**
-- Get all document attributes by documentID
 
 `POST {{GATEWAYHOST}}/v/1/document/attributes/`
 
@@ -563,6 +699,24 @@ Parameter | Default | Description
   }
 ]
 ```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- Get all document attributes by documentID
 
 **Query Parameters**
 
@@ -624,12 +778,6 @@ There are three options to seal a document:
 
 #### Option 1: e-Seal for electronic deed
 
-Sealing a document with a fixed layout and the position of the seal itself.
-
-This option is intended for sealing a document with predefined dimensions and the appearance of the seal in accordance with the electronic deed. The document must have a defined blank space at the bottom of the page because the visual part of the electronic seal will be copied over that part.
-
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/electronic_deed/fixed/`
-
 > JSON Body input:
 
 ```json
@@ -656,6 +804,28 @@ This option is intended for sealing a document with predefined dimensions and th
 }
 ```
 
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/electronic_deed/fixed/`
+
+Sealing a document with a fixed layout and the position of the seal itself.
+
+This option is intended for sealing a document with predefined dimensions and the appearance of the seal in accordance with the electronic deed. The document must have a defined blank space at the bottom of the page because the visual part of the electronic seal will be copied over that part.
+
 **Query Parameters**
 
 Parameter | Default | Description
@@ -671,10 +841,10 @@ Parameter | Default | Description
   - &quot;RecordNumber\* - ID of the document in central document management system
   - &quot;SystemID&quot;\* - pre-agreed system code that integrates with Signator system
   - &quot;SignatureOptions&quot;
-    - &quot;Reason&quot; - signature reason
-    - &quot;Location&quot; - location where the signature was created
-    - &quot;SignerContactInfo&quot;- information about the signer
-    - &quot;SignerName&quot; - name of the signer
+      - &quot;Reason&quot; - signature reason
+      - &quot;Location&quot; - location where the signature was created
+      - &quot;SignerContactInfo&quot;- information about the signer
+      - &quot;SignerName&quot; - name of the signer
 - output:
   - &quot;SignedPDF&quot; - signed pdf document in base 64 format
   - &quot;StorageProviderDocumentId&quot;
@@ -698,8 +868,6 @@ Seal a document with arbitrary text in the visual part of the seal and arbitrary
 
 #### Function: **SealDocumentWithPositionedText**
 
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/positioned/`
-
 > JSON Body input:
 
 ```json
@@ -722,7 +890,25 @@ Seal a document with arbitrary text in the visual part of the seal and arbitrary
 }
 ```
 
-> If successful the above command returns code **200 OK** and binary response in body
+> If successful the above command returns code **200 OK** and Signed PDF document
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/positioned/`
 
 **Query Parameters**
 
@@ -737,17 +923,17 @@ Parameter | Default | Description
 - input parameters:
   - &quot;File&quot;\* - document to be sealed
   - [&quot;SignatureText&quot; \* - text to be added to the visual part of the seal](#positioning-of-the-signature-image-seal)
-    - &quot;Text&quot;\* - text in the visual part of the digital seal
-    - &quot;Page&quot; - page on which the seal is placed
-    - &quot;WidgetOffsetX&quot; - seal position - lower left corner, x axis
-    - &quot;WidgetOffsetY&quot; - seal position - lower left corner, y axis
-    - WidgetWidth &quot;- seal image height
-    - &quot; WidgetHeight &quot;- seal image width
+      - &quot;Text&quot;\* - text in the visual part of the digital seal
+      - &quot;Page&quot; - page on which the seal is placed
+      - &quot;WidgetOffsetX&quot; - seal position - lower left corner, x axis
+      - &quot;WidgetOffsetY&quot; - seal position - lower left corner, y axis
+      - WidgetWidth &quot;- seal image height
+      - &quot; WidgetHeight &quot;- seal image width
   - &quot; SignatureOptions&quot;\*
-    - &quot; Reason &quot;- signature reason
-    - &quot; Location &quot;- location where signature was created
-    - &quot; SignerContactInfo &quot;- signer information
-    - &quot; SignerName &quot;- signer name
+      - &quot; Reason &quot;- signature reason
+      - &quot; Location &quot;- location where signature was created
+      - &quot; SignerContactInfo &quot;- signer information
+      - &quot; SignerName &quot;- signer name
 - output:
   - binary response with &quot;application/pdf&quot; content type
 
@@ -756,8 +942,6 @@ Parameter | Default | Description
 Sealing document with some text with fixed position.
 
 #### Function: **SealDocumentWithFixedText**
-
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/fixed/`
 
 > JSON Body input:
 
@@ -768,7 +952,25 @@ Sealing document with some text with fixed position.
 }
 ```
 
-> If successful the above command returns code **200 OK** and binary response in body
+> If successful the above command returns code **200 OK** and Signed PDF document
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/fixed/`
 
 **Query Parameters**
 
@@ -794,10 +996,6 @@ Example of the seal image layout with **arbitrary text** which is added to the v
 
 #### Function: **SealDocumentWithPositionedImage**
 
-Sealing a document with image and seal position.
-
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/image/positioned/`
-
 > JSON Body input:
 
 ```json
@@ -820,7 +1018,27 @@ Sealing a document with image and seal position.
 }
 ```
 
-> If successful the above command returns code **200 OK** and binary response in body
+> If successful the above command returns code **200 OK** and Signed PDF document
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+Sealing a document with image and seal position.
+
+`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/image/positioned/`
 
 **Query Parameters**
 
@@ -831,20 +1049,21 @@ Parameter | Default | Description
 - function name: **SealDocumentWithPositionedImage**
 - implemented in: Signator
 - caller: System X
+- [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration/SealDocumentWithPositionedImage)
 - input parameters:
   - &quot;File&quot;\* - a document to be sealed
   - [&quot;SignatureImage&quot; \* - image that is added to the visual part of the seal](#positioning-of-the-signature-image-seal)
-    - &quot;ImageData&quot;\* - base64 signature image
-    - &quot;Page&quot; - page on which the seal is placed
-    - &quot;WidgetOffsetX&quot; - seal position - lower left corner, x axis
-    - &quot;WidgetOffsetY&quot; - seal position - lower left corner, y axis
-    - &quot;WidgetWidth&quot; - height of the seal image
-    - &quot;WidgetHeight&quot; - width of the seal image
+      - &quot;ImageData&quot;\* - base64 signature image
+      - &quot;Page&quot; - page on which the seal is placed
+      - &quot;WidgetOffsetX&quot; - seal position - lower left corner, x axis
+      - &quot;WidgetOffsetY&quot; - seal position - lower left corner, y axis
+      - &quot;WidgetWidth&quot; - height of the seal image
+      - &quot;WidgetHeight&quot; - width of the seal image
   - &quot;SignatureOptions&quot;\*
-    - &quot;Reason&quot; - razlog potpisa
-    - &quot;Location&quot; - lokacija na kojoj je nastao potpis
-    - &quot;SignerContactInfo&quot; - informacije o potpisniku
-    - &quot;SignerName&quot; - ime potpisnika
+      - &quot;Reason&quot; - razlog potpisa
+      - &quot;Location&quot; - lokacija na kojoj je nastao potpis
+      - &quot;SignerContactInfo&quot; - informacije o potpisniku
+      - &quot;SignerName&quot; - ime potpisnika
 - output:
   - binary response with &quot;application/pdf&quot; content type
 
@@ -853,8 +1072,6 @@ Parameter | Default | Description
 Proposal for implementation of the integration interface on the system integrator side can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSeal%20Integration).
 
 #### Function: **StoreDocument**
-
-Function ensures that the document is saved to the central document management system if one exists (it can be DMS, eArchive, RMS, etc.).
 
 `{{GATEWAYHOST}}/v/1/integrator/store_document/`
 
@@ -877,6 +1094,24 @@ Function ensures that the document is saved to the central document management s
 }
 ```
 
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+Function ensures that the document is saved to the central document management system if one exists (it can be DMS, eArchive, RMS, etc.).
+
 **Query Parameters**
 
 Parameter | Default | Description
@@ -892,15 +1127,13 @@ Parameter | Default | Description
 - output:
   - &quot;ProviderType&quot;\* - which system saves sealed documents
   - &quot;ProviderInfo&quot;\*
-    - &quot;StorageProviderDocumentId&quot; - id of the document in central document management system
+      - &quot;StorageProviderDocumentId&quot; - id of the document in central document management system
 
 #### Document signing
 
 External users have the ability to authenticate a document by scanning a QR code or entering a predefined URL and entering a record number and control number.
 
 #### Function: **VerifyDocumentAuthenticity**
-
-The function provides a call from an external user who wants to verify a document by scanning a QR code drawn on the visual part of the seal or entering the URL of the verification page.
 
 `POST {{GATEWAYHOST}}/v/1/integrator/verify_document_authenticity/`
 
@@ -920,6 +1153,24 @@ The function provides a call from an external user who wants to verify a documen
 }
 ```
 
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+The function provides a call from an external user who wants to verify a document by scanning a QR code drawn on the visual part of the seal or entering the URL of the verification page.
+
 **Query Parameters**
 
 Parameter | Default | Description
@@ -934,19 +1185,16 @@ Parameter | Default | Description
   - &quot;StorageProviderDocumentId&quot;\* - ID of the document in central document management system
 - output:
   - &quot;AuthenticityDocument&quot;\* - a document that is displayed to the end user who wants to verify the authenticity of the document. The company/institution determines how the information is displayed for the end user:
-    - return of the sealed document
-    - return of a document that has information about the authenticity of the document
+      - return of the sealed document
+      - return of a document that has information about the authenticity of the document
 
 It is up to SystemX to implement either the first or second option based on the client&#39;s decision. Signator always receives a document which it displays on the verification website.
 
-Example of a QR code drawn on visual part of the seal is shown below. By scanning it, user will be redirected to the [verification page](#function-verifydocumentauthenticity), with &quot;Record number&quot; and &quot;Control number&quot; fields being automatically filled. In case user is accessing verification page without scanning QR code (by entering page URL), &quot;Record number&quot; and &quot;Control number&quot; fields have to be filled manually.
+Example of a QR code drawn on visual part of the seal is shown below. By scanning it, user will be redirected to the [verification page](#function-verifydocumentauthenticity)
+with &quot;Record number&quot; and &quot;Control number&quot; fields being automatically filled. In case user is accessing verification page without scanning QR code (by entering page URL), &quot;Record number&quot; and &quot;Control number&quot; fields have to be filled manually.
 
-It is up to SystemX to implement either the first or second option based on the client&#39;s decision. Signator always receives a document which it displays on the verification website.
 
-Example of a QR code drawn on visual part of the seal is shown below. By scanning it, user will be redirected to the
 ![Verify document](https://mobile.signator.hr/img/slika_9_api_doc.png)
-, with &quot;Record number&quot; and &quot;Control number&quot; fields being automatically filled. In case user is accessing verification page without scanning QR code (by entering page URL), &quot;Record number&quot; and &quot;Control number&quot; fields have to be filled manually.
-
 
 
 #### Error feedback
@@ -985,10 +1233,6 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
 
 #### Function: **StoreSubmittedForm**
 
-- After user filled the form Signator sends it in PDF format, together with filled fields in JSON format, to SystemX
-
-`POST {{GATEWAYHOST}}/v/1/integrator/submitted_form/`
-
 > JSON Body input:
 
 ```json
@@ -1021,6 +1265,26 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
   "documentId": 123
 }
 ```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- After user filled the form Signator sends it in PDF format, together with filled fields in JSON format, to SystemX
+
+`POST {{GATEWAYHOST}}/v/1/integrator/submitted_form/`
 
 **Query Parameters**
 
