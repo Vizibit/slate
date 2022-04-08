@@ -36,7 +36,8 @@ Parameter | Value
 ```
 
 Simple signature workflow integration enables 3rd party systems to easily integrate digital signature in their application, with minimal changes to the their existing codebase.
-This integration is targeted for existing systems that already have an UI, and want to add the document signature support.
+
+This integration is targeted for existing systems that already have an UI, and want to add the digital signature support.
 
 The integration consist of two main components: **"Signature workflow API"** and the **"Simple signer JS SDK"**
 
@@ -44,6 +45,7 @@ The integration consist of two main components: **"Signature workflow API"** and
 - **Simple signer JS SDK** - Javascript library that handles the PDF viewing, and the user input required to complete the remote signature
 
 **All the files stored by our APIs are encrypted using an AES256 encryption (at rest)**
+The application can be used in a **cloud environment** or a **on-premise** installation.
 
 ####StorageId and SignatureToken
 > If successful the above command returns JSON structured like this:
@@ -110,10 +112,11 @@ You can attach an additional query parameter to callback urls so you can identif
 
 **For example a sample callback:**
 
-- https://test.signumid.hr/callback?document_id=**{your_internal_document_id}**
+- https://test.signumid.hr/callback?document_id=**{your_internal_document_id}**&authorization_token=**{your_authorization_token}**
 
 The callback bodies are defined in the right column, as for the error codes the actual codes can be found at the end of this document.
 
+Additional authentication protocols can be supported **on a on premise** installation.
 ---
 
 ## Simple signer workflow error feedback
