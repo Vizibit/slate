@@ -1,0 +1,131 @@
+# **Simple signer workflow API**
+
+## Simple signer workflow introduction
+
+> Following examples will use **authorization as query parameter**.
+
+In order to use requests from this documentation, it is necessary to configure an environment defined with parameters such as gateway host and authorization key.
+
+Here's an example of API structure for an endpoint:
+
+**HTTP Request**
+
+`GET {{GATEWAYHOST}}/v/1/signature/workflow/pdf/single`
+
+In order to test requests in a test environment, you can find demonstrational gateway host in the table below. The required authorization key must be requested from Vizibit company. Once given, the authorization key should be written in a header with or without **Bearer** key word or as a **query** parameter (authorization_key) in the testing request.
+
+**Query Parameters**
+
+Parameter | Value
+--------- | -----------
+**GATEWAYHOST** | https://test.signumid.hr
+**authorization_key** | Your authorization key. Add in a header of request or as **query** parameter.
+
+
+### Simple signature workflow
+`POST {{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`
+
+> JSON body request example:
+
+```json
+{
+  "Document": "{{PDF file for signature [base64]}}",
+  "OnSignedCallback": "{{Signed document callback url}}",
+  "OnErrorCallback": "{{Signing error callback url}}"
+}
+```
+
+Simple signature workflow integration enables 3rd party systems to easily integrate digital signature in their application, with minimal changes to the their existing codebase.
+This integration is targeted for existing systems that already have an UI, and want to add the document signature support.
+
+The integration consist of two main components: **"Signature workflow API"** and the **"Simple signer JS SDK"**
+
+- **Signature workflow API** - Exposes an API endpoint that receives the document for signature and two callbacks (OnSignedCallback and OnErrorCallback)
+- **Simple signer JS SDK** - Javascript library that handles the PDF viewing, and the user input required to complete the remote signature
+
+**All the files stored by our APIs are encrypted using an AES256 encryption (at rest)**
+
+####StorageId and SignatureToken
+> If successful the above command returns JSON structured like this:
+
+```json
+{
+  "StorageId": "{{Vizibit system generated storage id}}",
+  "SignatureToken": "{{Vizibit system generated signature token}}",
+}
+
+```
+"StorageId" and "SignatureToken" are **Vizibit generated ids** that are **solely used by Vizibit**.
+
+Your application only needs to communicate the described fields to the "Simple signer JS SDK" constructor.
+
+####Diagram
+As seen in the diagram below, the integration flow is as follows:
+
+1. Your frontend UI application request a PDF document signature from your backend
+2. Your backend prepares the PDF document, and defines the **OnSignedCallback and OnErrorCallback** callbacks.
+After everything is prepared your backend sends a **HTTP POST** request to "**Signature workflow API**" `{{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`, and if everything is correct the API responds with a object that contains a "**StorageId**" and "**SignatureToken**"
+3. Your backend communicates the "**StorageId**" and "**SignatureToken**" to your frontend UI application
+4. Your frontend UI constructs the "**Simple signer JS SDK**" with the received "**StorageId**" and "**SignatureToken**"
+5. The "**Simple signer JS SDK**" guides the user journey, offering him to add a signature image, to perform a user identification (e.g. video, autoident) if he doesn't have an account and perform the communication with our "**Simple Signer API**"
+6. When the signature is successful or failed, the "**Simple Signer API**" notifies the "**Signature workflow API**" about the signature status
+7. The "**Signature workflow API**" executes the correct callback to **notify your backend** about the signature status
+
+
+![Simple Signer Workflow api](images/simple_signer_workflow_diagram.png)
+
+###Signature workflow API
+The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "**OnErrorCallback**".
+
+- **Document** - PDF document for signature in **base64** encoding (**with padding**)
+- **OnSignedCallback** -The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **successful**.
+- **OnErrorCallback** - The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **not successful**.
+
+####Callbacks
+> Callback response "OnSignedCallback"
+
+```json
+{
+  "Type": "SUCCESS",
+  "SignedDocument": "{{Signed PDF file [base64]}}",
+}
+
+```
+
+> Callback response "OnErrorCallback"
+
+```json
+{
+  "Type": "ERROR",
+  "Error": {
+    "Code": "{{ErrorCode}}",
+    "AdditionalInformation" : "{{Information}}"
+  }
+}
+
+```
+**Callbacks** are URLs that point to your backend system, and allow us to **asynchronously** return the status of the signing operation.
+
+You can attach an additional query parameter to callback urls so you can identify for which signature you received the response. You can choose any number of query parameters, and there are no reserved query parameters from our side for the callback urls
+
+**For example a sample callback:**
+
+- https://test.signumid.hr/callback?document_id=**{your_internal_document_id}**
+
+The callback bodies are defined in the right column, as for the error codes the actual codes can be found at the end of this document.
+
+---
+
+## Simple signer workflow error feedback
+
+All errors return the HTTP status code 400, unless an unforeseen situation has occurred. In that case HTTP status code is 500.
+
+All errors are returned as **JSON**.
+
+List of possible errors on Simple signer workflow interface
+
+Error Code | Meaning
+---------- | -------
+TBD | TBD
+
+In case of an error, the processing is interrupted and the error response is returned to the caller.
