@@ -122,6 +122,19 @@ The callback bodies are defined in the right column, as for the error codes the 
 
 Additional authentication protocols can be supported **on a on premise** installation.
 
+**Callback retires**
+
+When the signature is finished or faulted our API will call your callback, in the scenario that your API is not available the application will retry in the following intervals:
+
+- After 1 second
+- After 10 second
+- After 60 second
+- After 10 minutes
+- After 30 minutes
+- After 1 hour
+- After 12 hours
+- After 36 hours
+
 ---
 
 ## Simple signer workflow error feedback
