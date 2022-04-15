@@ -54,12 +54,15 @@ The application can be used in a **cloud environment** or a **on-premise** insta
 {
   "StorageId": "{{Vizibit system generated storage id}}",
   "SignatureToken": "{{Vizibit system generated signature token}}",
+  "WorkflowId": {{Internal workflow id}}
 }
 
 ```
 "StorageId" and "SignatureToken" are **Vizibit generated ids** that are **solely used by Vizibit**.
 
 Your application only needs to communicate the described fields to the "Simple signer JS SDK" constructor.
+
+The **WorkflowId** is returned on all requests so we can know exactly the workflow in question in case we need to do additional debugging.
 
 ####Diagram
 As seen in the diagram below, the integration flow is as follows:
@@ -85,7 +88,7 @@ The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "
 
 Additionally the API exposes an additional optional field: "**ExpiresAt**".
 
-- **ExpiresAt**  - ExpiresAt determines until when the document is available for signature, default value is 2 days from submission. After the period expires and the document is not signed the document is automatically deleted from the API
+- **ExpiresAt**  - ExpiresAt determines until when the document is available for signature, default value is 2 days from submission. **After the period expires and the document is not signed the document is automatically deleted from the API**
 
 ####Callbacks
 > Callback response "OnSignedCallback"
@@ -106,7 +109,8 @@ Content-Type: application/json
 {
   "Type": "Error",
   "Description": "{{Error description}}",
-  "Code": "{{ErrorCode}}"
+  "Code": "{{ErrorCode}}",
+  "WorkflowId": {{Internal workflow id}}
 }
 
 ```
@@ -121,6 +125,19 @@ You can attach an additional query parameter to callback urls so you can identif
 The callback bodies are defined in the right column, as for the error codes the actual codes can be found at the end of this document.
 
 Additional authentication protocols can be supported **on a on premise** installation.
+
+**Callback retires**
+
+When the signature is finished or faulted our API will call your callback, in the scenario that your API is not available the application will retry in the following intervals:
+
+- After 1 second
+- After 10 second
+- After 60 second
+- After 10 minutes
+- After 30 minutes
+- After 1 hour
+- After 12 hours
+- After 36 hours
 
 ---
 
@@ -143,6 +160,7 @@ Error Code | Meaning
 30007 | Request 'OnSignedCallback' must be defined
 30008 | Request 'Document' must be defined
 30009 | 'ExpiresAt' parameter is not valid (Most likely the timestamp has already expired)
+30014 | Request 'Document' is not a PDF
 
 In case of an error, the processing is interrupted and the error response is returned to the caller.
 
