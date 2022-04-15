@@ -54,12 +54,15 @@ The application can be used in a **cloud environment** or a **on-premise** insta
 {
   "StorageId": "{{Vizibit system generated storage id}}",
   "SignatureToken": "{{Vizibit system generated signature token}}",
+  "WorkflowId": {{Internal workflow id}}
 }
 
 ```
 "StorageId" and "SignatureToken" are **Vizibit generated ids** that are **solely used by Vizibit**.
 
 Your application only needs to communicate the described fields to the "Simple signer JS SDK" constructor.
+
+The **WorkflowId** is returned on all requests so we can know exactly the workflow in question in case we need to do additional debugging.
 
 ####Diagram
 As seen in the diagram below, the integration flow is as follows:
@@ -106,7 +109,8 @@ Content-Type: application/json
 {
   "Type": "Error",
   "Description": "{{Error description}}",
-  "Code": "{{ErrorCode}}"
+  "Code": "{{ErrorCode}}",
+  "WorkflowId": {{Internal workflow id}}
 }
 
 ```
