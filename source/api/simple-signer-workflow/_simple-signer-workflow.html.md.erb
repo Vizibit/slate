@@ -54,7 +54,7 @@ The application can be used in a **cloud environment** or a **on-premise** insta
 {
   "StorageId": "{{Vizibit system generated storage id}}",
   "SignatureToken": "{{Vizibit system generated signature token}}",
-  "WorkflowId": {{Internal workflow id}}
+  "WorkflowId": "{{Internal workflow id}}"
 }
 
 ```
@@ -110,7 +110,7 @@ Content-Type: application/json
   "Type": "Error",
   "Description": "{{Error description}}",
   "Code": "{{ErrorCode}}",
-  "WorkflowId": {{Internal workflow id}}
+  "WorkflowId": "{{Internal workflow id}}"
 }
 
 ```
@@ -168,7 +168,7 @@ In case of an error, the processing is interrupted and the error response is ret
 
 **Cloud version**
 
-- The APISs only produce **LTA** signatures
+- The APIs only produce **LTA** signatures
 - **SHA256** is used as the hashing algorithm
 
 
