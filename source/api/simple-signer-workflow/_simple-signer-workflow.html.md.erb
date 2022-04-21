@@ -206,118 +206,95 @@ In case of an error, the processing is interrupted and the error response is ret
 
 In order to use **Simple signer** Javascript SDK in your web application/site, it is necessary to embed **Simple signer JavaScript** and **CSS** files in your **HTML** document, as shown in example on the right. 
 
-There are four **Simple signer** Javascript SDK interfaces available:
+There are two **Simple signer** Javascript SDK interfaces available:
 
-- **Interface 1**: complete signing process is handled by Simple signer SDK (including PDF document preview and signature options/user data selection in signing dialog)
-- **Interface 2**: PDF document preview is available in Simple signer PDF viewer, but user data/signature options are predefined by your application/website
-- **Interface 3**: simplified process with signature options/user data selection in signing dialog, without PDF document preview
-- **Interface 4**: simplified process where user data/signature options are predefined by your application/website
+- **Interface 1**: complete signing process (with PDF preview)
+- **Interface 2**: simple signing process (without PDF preview)
  
 ## Simple signer JS SDK interface
 ###Interfaces
 **Interface 1**
 
-> Signator.completeProcess
+If *userData* object is passed, signature options and signee data will be prefilled and used for signing document.
+If *userData* object is undefined, signature options and signee data will be defined as a part of signature process.
+
+> Signator.signWithPdfViewer
 
 ```js
-Signator.completeProcess(
-  "endpointUrl", 
-  "storageId", 
-  "signatureToken", 
-  "htmlElementId", 
-  onSign, 
-  onError, 
-  {options}
+Signator.signWithPdfViewer(
+  endpointUrl: "{{string containing signing service URL}}", 
+  storageId: "{{Vizibit system generated storage id}}", 
+  signatureToken: "{{Vizibit system generated signature token}}", 
+  userData: "{{object containing signature options and signee data}}",
+  htmlElementId: "{{string containing id of HTML element where PDF viewer will be rendered}}", 
+  onSign: "{{callback function invoked on successful signing of the document}}", 
+  onError: "{{callback function invoked in case of error}}", 
+  options: "{{options object (not configured currently)}}"
 )
 ```
 
- - method name: **Signator.completeProcess**
+ - method name: **Signator.signWithPdfViewer**
 
  - input parameters:
   - **"endpointUrl"**: signing API endpoint URL
   - **"storageId"**: document ID from the storage
   - **"signatureToken"**: signature JWT token
   - **"htmlElementId"**: ID of the HTML element where PDF viewer will be rendered
-  - **"onSign"**: event fired on successul signing, *optional*
-  - **"onError"**: event fired in case of error, *optional*
+  - **"userData"**: object containing signature options/user data, *optional*
+  - **"onSign"**: callback function invoked on successful signing of the document, *optional*
+  - **"onError"**: callback function invoked in case of error, *optional*
   - **"options"**: options object (not configured currently), *optional*
 
 **Interface 2**
 
-> Signator.completeProcessWithUserData
+If *userData* object is passed, signature options and signee informations will be prefilled and used for signing document.
+If *userData* object is undefined, signature options and informations will be defined as a part of signature process.
+
+> Signator.sign
 
 ```js
-Signator.completeProcessWithUserData(
-  "endpointUrl", 
-  "storageId", 
-  "signatureToken", 
-  "htmlElementId", 
-  {userData}, 
-  onSign, 
-  onError, 
-  {options}
+Signator.sign(
+  endpointUrl: "{{string containing signing service URL}}", 
+  signatureToken: "{{Vizibit system generated signature token}}", 
+  userData: "{{object containing signature options and signee data}}",
+  onSign: "{{callback function invoked on successful signing of the document}}", 
+  onError: "{{callback function invoked in case of error}}", 
+  options: "{{options object (not configured currently)}}"
 )
 ```
 
- - method name: **Signator.completeProcessWithUserData**
- 
- - input parameters:
-  - **"endpointUrl"**: signing API endpoint URL
-  - **"storageId"**: document ID from the storage
-  - **"signatureToken"**: signature JWT token
-  - **"htmlElementId"**: ID of the HTML element where PDF viewer will be rendered
-  - **"userData"**: object containing signature options/user data
-  - **"onSign"**: event fired on successul signing, *optional*
-  - **"onError"**: event fired in case of error, *optional*
-  - **"options"**: options object (not configured currently), *optional*
-
-**Interface 3**
-
-> Signator.simpleProcess
-
-```js
-Signator.simpleProcess(
-  "endpointUrl", 
-  "signatureToken", 
-  onSign,
-  onError, 
-  {options}
-)
-```
-
- - method name: **Signator.simpleProcess**
+ - method name: **Signator.sign**
  
  - input parameters:
   - **"endpointUrl"**: signing API endpoint URL
   - **"signatureToken"**: signature JWT token
-  - **"onSign"**: event fired on successul signing, *optional*
-  - **"onError"**: event fired in case of error, *optional*
+  - **"userData"**: object containing signature options/user data, *optional*
+  - **"onSign"**: callback function invoked on successful signing of the document, *optional*
+  - **"onError"**: callback function invoked in case of error, *optional*
   - **"options"**: options object (currently not configured), *optional*
-  
-**Interface 4**
 
-> Signator.simpleProcessWithUserData
+###Callbacks
 
-```js
-Signator.simpleProcessWithUserData(
-  "endpointUrl", 
-  "signatureToken", 
-  {userData}, 
-  onSign, 
-  onError, 
-  {options}
-)
-```
+**onSign callback**
 
- - method name: **Signator.simpleProcessWithUserData**
- 
- - input parameters:
-  - **"endpointUrl"**: signing API endpoint URL
-  - **"signatureToken"**: signature JWT token
-  - **"userData"**: object containing signature options/user data
-  - **"onSign"**: event fired on successul signing, *optional*
-  - **"onError"**: event fired in case of error, *optional*
-  - **"options"**: options object (currently not configured), *optional*
+This callback is invoked if document signing was successful and returns signed document in base64 format.
+
+**onError callback**
+
+This callback is invoked in case of error during signing process and returns error code in string format.
+
+###Simple signer JS SDK interface error feedback
+
+Error Code | Meaning
+---------- | -------
+40000 | Signature provider parameter is not correct
+40001 | Jurisdiction parameter is not correct
+40002 | Signature level parameter is not correct
+40003 | Missing HTML element ID parameter
+40004 | Missing signature token
+40005 | Missing storage ID
+40006 | Unable to load document by specified storage ID
+40100 | Unable to sign document
    
 ###Types
 **Types used in Simple signer JS SDK**
@@ -326,14 +303,20 @@ Signator.simpleProcessWithUserData(
 - **"storageId"**: string
 - **"signatureToken"**: string
 - **"htmlElementId"**: string
-- **"userData"**: object {
-  - **"signatureProvider"**: string
-  - **"mobileNumber"**: string
-  - **"jurisdiction"**: string
-  - **"signatureLevel"**: string
-  - **"reason"**: string
-  - **"location"**: string
-}
-- **"onSign"**: event
-- **"onError"**: event
+- **"userData"**: UserData
+- **"onSign"**: function
+- **"onError"**: function
 - **"options"**: object
+
+
+
+interface **UserData** {
+
+ - **"signatureProvider"**: 'SwisscomAis' | 'CertiliaRdd',
+ - **"mobileNumber"**: string
+ - **"jurisdiction"**: 'ZERTES' | 'EIDAS'
+ - **"signatureLevel"**: 'AES' | 'QES'
+ - **"reason"**: string,
+ - **"location"**: string
+
+}
