@@ -280,29 +280,30 @@ Error Code | Meaning
 40100 | Unable to sign document
 
 ###Types
+```ts
+
+interface UserData {
+ "signatureProvider": 'SwisscomAis'|'CertiliaRdd',
+ "mobileNumber": string
+ "jurisdiction": 'ZERTES'|'EIDAS'
+ "signatureLevel": 'AES'|'QES'
+ "reason": string,
+ "location": string
+}
+```
 **Types used in Simple signer JS SDK**
 
-- **"endpointUrl"**: string
-- **"storageId"**: string
-- **"signatureToken"**: string
-- **"htmlElementId"**: string
-- **"userData"**: UserData
-- **"onSign"**: function
-- **"onError"**: function
-- **"options"**: object
+Name | Type
+---------- | -------
+**endpointUrl**  | string
+**storageId**  | string
+**signatureToken**  | string
+**htmlElementId**  | string
+**userData**  | UserData
+**onSign**  | function
+**onError**  | function
+**options**  | object
 
-
-
-interface **UserData** {
-
- - **"signatureProvider"**: 'SwisscomAis' | 'CertiliaRdd',
- - **"mobileNumber"**: string
- - **"jurisdiction"**: 'ZERTES' | 'EIDAS'
- - **"signatureLevel"**: 'AES' | 'QES'
- - **"reason"**: string,
- - **"location"**: string
-
-}
 # Prerequisites
 > Following examples will use **authorization as query parameter**.
 
