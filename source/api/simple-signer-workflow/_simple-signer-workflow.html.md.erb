@@ -106,6 +106,8 @@ The callback bodies are defined in the right column, as for the error codes the 
 
 Additional authentication protocols can be supported **on a on premise** installation.
 
+Callback **OnErrorCallback** [error codes](#error-codes)
+
 **Callback retries**
 
 When the signature is finished or faulted our API will call your callback, in the scenario that your API is not available the application will retry in the following intervals:
@@ -291,8 +293,11 @@ This callback is invoked if document signing was successful and returns signed d
   console.log(errorCode);
 }
 ```
-
 This callback is invoked in case of error during signing process and returns error code in string format.
+
+
+[Error codes](#simple-signer-js-sdk-interface-error-feedback)
+
 
 ###Simple signer JS SDK interface error feedback
 
