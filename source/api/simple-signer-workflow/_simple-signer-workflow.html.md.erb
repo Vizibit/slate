@@ -272,9 +272,25 @@ Name | Description
 
 **onSign callback**
 
+```js
+// Example onSign callback, the file parameter contains a base64 signed document
+
+(file: string) => {
+  console.log(file);
+}
+```
+
 This callback is invoked if document signing was successful and returns signed document in base64 format.
 
 **onError callback**
+
+```js
+// Example onError callback, the errorCode parameter contains one of the defined JS error codes
+
+(errorCode: Number) => {
+  console.log(errorCode);
+}
+```
 
 This callback is invoked in case of error during signing process and returns error code in string format.
 
