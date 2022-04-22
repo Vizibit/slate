@@ -161,6 +161,9 @@ Error Code | Meaning
 30008 | Request 'Document' must be defined
 30009 | 'ExpiresAt' parameter is not valid (Most likely the timestamp has already expired)
 30014 | Request 'Document' is not a PDF
+30015 | Document doesn't exist
+30016 | Document deleted
+30017 | Document not readable
 
 In case of an error, the processing is interrupted and the error response is returned to the caller.
 
@@ -204,13 +207,13 @@ In case of an error, the processing is interrupted and the error response is ret
 ```
 **Installation and usage**
 
-In order to use **Simple signer** Javascript SDK in your web application/site, it is necessary to embed **Simple signer JavaScript** and **CSS** files in your **HTML** document, as shown in example on the right. 
+In order to use **Simple signer** Javascript SDK in your web application/site, it is necessary to embed **Simple signer JavaScript** and **CSS** files in your **HTML** document, as shown in example on the right.
 
 There are two **Simple signer** Javascript SDK interfaces available:
 
 - **Interface 1**: complete signing process (with PDF preview)
 - **Interface 2**: simple signing process (without PDF preview)
- 
+
 ## Simple signer JS SDK interface
 ###Interfaces
 **Interface 1**
@@ -222,13 +225,13 @@ If *userData* object is undefined, signature options and signee data will be def
 
 ```js
 Signator.signWithPdfViewer(
-  endpointUrl: "{{string containing signing service URL}}", 
-  storageId: "{{Vizibit system generated storage id}}", 
-  signatureToken: "{{Vizibit system generated signature token}}", 
+  endpointUrl: "{{string containing signing service URL}}",
+  storageId: "{{Vizibit system generated storage id}}",
+  signatureToken: "{{Vizibit system generated signature token}}",
   userData: "{{object containing signature options and signee data}}",
-  htmlElementId: "{{string containing id of HTML element where PDF viewer will be rendered}}", 
-  onSign: "{{callback function invoked on successful signing of the document}}", 
-  onError: "{{callback function invoked in case of error}}", 
+  htmlElementId: "{{string containing id of HTML element where PDF viewer will be rendered}}",
+  onSign: "{{callback function invoked on successful signing of the document}}",
+  onError: "{{callback function invoked in case of error}}",
   options: "{{options object (not configured currently)}}"
 )
 ```
@@ -254,17 +257,17 @@ If *userData* object is undefined, signature options and informations will be de
 
 ```js
 Signator.sign(
-  endpointUrl: "{{string containing signing service URL}}", 
-  signatureToken: "{{Vizibit system generated signature token}}", 
+  endpointUrl: "{{string containing signing service URL}}",
+  signatureToken: "{{Vizibit system generated signature token}}",
   userData: "{{object containing signature options and signee data}}",
-  onSign: "{{callback function invoked on successful signing of the document}}", 
-  onError: "{{callback function invoked in case of error}}", 
+  onSign: "{{callback function invoked on successful signing of the document}}",
+  onError: "{{callback function invoked in case of error}}",
   options: "{{options object (not configured currently)}}"
 )
 ```
 
  - method name: **Signator.sign**
- 
+
  - input parameters:
   - **"endpointUrl"**: signing API endpoint URL
   - **"signatureToken"**: signature JWT token
@@ -295,7 +298,7 @@ Error Code | Meaning
 40005 | Missing storage ID
 40006 | Unable to load document by specified storage ID
 40100 | Unable to sign document
-   
+
 ###Types
 **Types used in Simple signer JS SDK**
 
