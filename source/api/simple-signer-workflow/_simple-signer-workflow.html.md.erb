@@ -2,27 +2,34 @@
 
 ## Simple signer workflow introduction
 
-> Following examples will use **authorization as query parameter**.
+Simple signature workflow integration enables 3rd party systems to easily integrate digital signature in their application, with minimal changes to the their existing codebase.
 
-In order to use requests from this documentation, it is necessary to configure an environment defined with parameters such as gateway host and authorization key.
+This integration is targeted for existing systems that already have an UI, and want to add the digital signature support.
 
-Here's an example of API structure for an endpoint:
+####Components
+The integration consist of two main components: **"Signature workflow API"** and the **"Simple signer JS SDK"**
 
-**HTTP Request**
+- **Signature workflow API** - Exposes an API endpoint that receives the document for signature and two callbacks (OnSignedCallback and OnErrorCallback)
+- **Simple signer JS SDK** - Javascript library that handles the PDF viewing, and the user input required to complete the remote signature
 
-`GET {{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`
+The application can be used in a **cloud environment** or a **on-premise** installation.
 
-In order to test requests in a test environment, you can find demonstrational gateway host in the table below. The required authorization key must be requested from Vizibit company. Once given, the authorization key should be written in a header with or without **Bearer** key word or as a **query** parameter (authorization_key) in the testing request.
+###Diagram
+As seen in the diagram below, the integration flow is as follows:
 
-**Query Parameters**
+1. Your frontend UI application request a PDF document signature from your backend
+2. Your backend prepares the PDF document, and defines the **OnSignedCallback and OnErrorCallback** callbacks.
+After everything is prepared your backend sends a **HTTP POST** request to "**Signature workflow API**" `{{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`, and if everything is correct the API responds with a object that contains a "**StorageId**" and "**SignatureToken**"
+3. Your backend communicates the "**StorageId**" and "**SignatureToken**" to your frontend UI application
+4. Your frontend UI constructs the "**Simple signer JS SDK**" with the received "**StorageId**" and "**SignatureToken**"
+5. The "**Simple signer JS SDK**" guides the user journey, offering him to add a signature image, to perform a user identification (e.g. video, autoident) if he doesn't have an account and perform the communication with our "**Simple Signer API**"
+6. When the signature is successful or failed, the "**Simple Signer API**" notifies the "**Signature workflow API**" about the signature status
+7. The "**Signature workflow API**" executes the correct callback to **notify your backend** about the signature status
 
-Parameter | Value
---------- | -----------
-**GATEWAYHOST** | https://test.signumid.hr
-**authorization_key** | Your authorization key. Add in a header of request or as **query** parameter.
 
+![Simple Signer Workflow api](images/simple_signer_workflow_diagram.png)
 
-### Simple signature workflow
+##Signature workflow API
 `POST {{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`
 
 > JSON body request example (content-type: application/json):
@@ -35,19 +42,17 @@ Parameter | Value
   "ExpiresAt": "{{Unix UTC timestamp for expiry}}"
 }
 ```
+The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "**OnErrorCallback**".
 
-Simple signature workflow integration enables 3rd party systems to easily integrate digital signature in their application, with minimal changes to the their existing codebase.
+- **Document** - PDF document for signature in **base64** encoding (**with padding**)
+- **OnSignedCallback** -The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **successful**.
+- **OnErrorCallback** - The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **not successful**.
 
-This integration is targeted for existing systems that already have an UI, and want to add the digital signature support.
+Additionally the API exposes an additional optional field: "**ExpiresAt**".
 
-The integration consist of two main components: **"Signature workflow API"** and the **"Simple signer JS SDK"**
+- **ExpiresAt**  - ExpiresAt determines until when the document is available for signature, default value is 2 days from submission. **After the period expires and the document is not signed the document is automatically deleted from the API**
 
-- **Signature workflow API** - Exposes an API endpoint that receives the document for signature and two callbacks (OnSignedCallback and OnErrorCallback)
-- **Simple signer JS SDK** - Javascript library that handles the PDF viewing, and the user input required to complete the remote signature
-
-The application can be used in a **cloud environment** or a **on-premise** installation.
-
-####StorageId and SignatureToken
+###StorageId and SignatureToken
 > If successful the above command returns JSON structured like this (content-type: application/json):
 
 ```json
@@ -64,33 +69,8 @@ Your application only needs to communicate the described fields to the "Simple s
 
 The **WorkflowId** is returned on all requests so we can know exactly the workflow in question in case we need to do additional debugging.
 
-####Diagram
-As seen in the diagram below, the integration flow is as follows:
 
-1. Your frontend UI application request a PDF document signature from your backend
-2. Your backend prepares the PDF document, and defines the **OnSignedCallback and OnErrorCallback** callbacks.
-After everything is prepared your backend sends a **HTTP POST** request to "**Signature workflow API**" `{{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`, and if everything is correct the API responds with a object that contains a "**StorageId**" and "**SignatureToken**"
-3. Your backend communicates the "**StorageId**" and "**SignatureToken**" to your frontend UI application
-4. Your frontend UI constructs the "**Simple signer JS SDK**" with the received "**StorageId**" and "**SignatureToken**"
-5. The "**Simple signer JS SDK**" guides the user journey, offering him to add a signature image, to perform a user identification (e.g. video, autoident) if he doesn't have an account and perform the communication with our "**Simple Signer API**"
-6. When the signature is successful or failed, the "**Simple Signer API**" notifies the "**Signature workflow API**" about the signature status
-7. The "**Signature workflow API**" executes the correct callback to **notify your backend** about the signature status
-
-
-![Simple Signer Workflow api](images/simple_signer_workflow_diagram.png)
-
-###Signature workflow API
-The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "**OnErrorCallback**".
-
-- **Document** - PDF document for signature in **base64** encoding (**with padding**)
-- **OnSignedCallback** -The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **successful**.
-- **OnErrorCallback** - The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **not successful**.
-
-Additionally the API exposes an additional optional field: "**ExpiresAt**".
-
-- **ExpiresAt**  - ExpiresAt determines until when the document is available for signature, default value is 2 days from submission. **After the period expires and the document is not signed the document is automatically deleted from the API**
-
-####Callbacks
+###Callbacks
 > Callback response "OnSignedCallback"
 
 ```http
@@ -141,7 +121,7 @@ When the signature is finished or faulted our API will call your callback, in th
 
 ---
 
-## Simple signer workflow error feedback
+##Error codes
 
 All errors return the HTTP status code 400, unless an unforeseen situation has occurred. In that case HTTP status code is 500.
 
@@ -167,7 +147,7 @@ Error Code | Meaning
 
 In case of an error, the processing is interrupted and the error response is returned to the caller.
 
-## Simple signer PDF signature type
+##PDF signature type
 
 **Cloud version**
 
@@ -180,7 +160,7 @@ In case of an error, the processing is interrupted and the error response is ret
 - Supported signature levels: **B, T, LT, LTA**
 - **SHA256** is used as the hashing algorithm (can be changed depending on the clients needs, **SHA1 is not supported**)
 
-## Simple signer workflow security
+##Security
 
 - Every file uploaded to any of our APIs is encrypted using an **AES256** encryption (**at rest**)
 - The encryption can be upgraded depending the clients wishes (applies to the on-premise installation)
@@ -323,3 +303,23 @@ interface **UserData** {
  - **"location"**: string
 
 }
+# Prerequisites
+> Following examples will use **authorization as query parameter**.
+
+In order to use requests from this documentation, it is necessary to configure an environment defined with parameters such as gateway host and authorization key.
+
+Here's an example of API structure for an endpoint:
+
+**HTTP Request**
+
+`GET {{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`
+
+In order to test requests in a test environment, you can find demonstrational gateway host in the table below. The required authorization key must be requested from Vizibit company. Once given, the authorization key should be written in a header with **Bearer** key word or as a **query** parameter (authorization_key) in the testing request.
+
+**Query Parameters**
+
+Parameter | Value
+--------- | -----------
+**GATEWAYHOST** | https://test.signumid.hr
+**authorization_key** | Your authorization key. Add in a header of request or as **query** parameter.
+
