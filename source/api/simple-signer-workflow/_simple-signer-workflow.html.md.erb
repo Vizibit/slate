@@ -131,6 +131,7 @@ List of possible errors on Simple signer workflow interface
 
 Error Code | Meaning
 ---------- | -------
+1001 | SignatureToken has expired
 30001 | Unable to create the requested workflow. Internal error
 30002 | Unable to map the request to the internal object (Check for syntax errors)
 30003 | Signature has been rejected by the signer
@@ -196,15 +197,18 @@ There are two **Simple signer** Javascript SDK interfaces available:
 
 ## Simple signer JS SDK interface
 ###Interfaces
+####Signator.signWithPdfViewer
 **Interface 1**
 
 If *userData* object is passed, signature options and signee data will be prefilled and used for signing document.
+
 If *userData* object is undefined, signature options and signee data will be defined as a part of signature process.
 
 > Signator.signWithPdfViewer
 
 ```js
 Signator.signWithPdfViewer(
+{
   endpointUrl: "{{string containing signing service URL}}",
   storageId: "{{Vizibit system generated storage id}}",
   signatureToken: "{{Vizibit system generated signature token}}",
@@ -213,48 +217,56 @@ Signator.signWithPdfViewer(
   onSign: "{{callback function invoked on successful signing of the document}}",
   onError: "{{callback function invoked in case of error}}",
   options: "{{options object (not configured currently)}}"
+}
 )
 ```
+**Input parameters**:
 
- - method name: **Signator.signWithPdfViewer**
+Name | Description
+---------- | -------
+**endpointUrl**| signing API endpoint URL
+**storageId** | document ID from the storage
+**signatureToken** | signature JWT token
+**htmlElementId** | ID of the HTML element where PDF viewer will be rendered
+**userData** | object containing signature options/user data, *optional*
+**onSign** | callback function invoked on successful signing of the document, *optional*
+**onError** | callback function invoked in case of error, *optional*
+**options** | options object (not configured currently), *optional*
 
- - input parameters:
-  - **"endpointUrl"**: signing API endpoint URL
-  - **"storageId"**: document ID from the storage
-  - **"signatureToken"**: signature JWT token
-  - **"htmlElementId"**: ID of the HTML element where PDF viewer will be rendered
-  - **"userData"**: object containing signature options/user data, *optional*
-  - **"onSign"**: callback function invoked on successful signing of the document, *optional*
-  - **"onError"**: callback function invoked in case of error, *optional*
-  - **"options"**: options object (not configured currently), *optional*
+
+####Signator.sign
 
 **Interface 2**
 
 If *userData* object is passed, signature options and signee informations will be prefilled and used for signing document.
+
 If *userData* object is undefined, signature options and informations will be defined as a part of signature process.
 
 > Signator.sign
 
 ```js
 Signator.sign(
+{
   endpointUrl: "{{string containing signing service URL}}",
   signatureToken: "{{Vizibit system generated signature token}}",
   userData: "{{object containing signature options and signee data}}",
   onSign: "{{callback function invoked on successful signing of the document}}",
   onError: "{{callback function invoked in case of error}}",
   options: "{{options object (not configured currently)}}"
+}
 )
 ```
 
- - method name: **Signator.sign**
+**Input parameters**:
 
- - input parameters:
-  - **"endpointUrl"**: signing API endpoint URL
-  - **"signatureToken"**: signature JWT token
-  - **"userData"**: object containing signature options/user data, *optional*
-  - **"onSign"**: callback function invoked on successful signing of the document, *optional*
-  - **"onError"**: callback function invoked in case of error, *optional*
-  - **"options"**: options object (currently not configured), *optional*
+Name | Description
+---------- | -------
+**endpointUrl** | signing API endpoint URL
+**signatureToken** | signature JWT token
+**userData** | object containing signature options/user data, *optional*
+**onSign** | callback function invoked on successful signing of the document, *optional*
+**onError** | callback function invoked in case of error, *optional*
+**options** | options object (currently not configured), *optional*
 
 ###Callbacks
 
