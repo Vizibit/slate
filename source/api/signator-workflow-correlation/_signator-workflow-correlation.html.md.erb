@@ -1,0 +1,101 @@
+# **API Sučelja za integraciju na Signator correlation sustav**
+
+![Logo](https://demo.signator.eu/assets/img/default/logo.svg)
+
+**UVOD**
+
+Ovaj dokument opisuje moguće načine integracije Signator sustava i Sustava X (generičkog sustava). Signator osigurava centralnu ovjeru dokumenata digitalnim certifikatima, pečatima ili vremenskim žigovima.
+
+## Uvodne napomene
+
+> Nadolazeći primjeri koristit će **authorizacijski ključ kao query parametar**.
+
+Ukoliko želite testirati zahtjeve na testnom okruženju, u tablici niže možete pronaći demo gateway host. Autorizacijski ključ potrebno je zatražiti od Vizibita, te ga dodati u header ili upisati kao query parametar (authorization_key) zahtjeva koji želite testirati.
+
+Primjer strukture API URL-a izgleda kako slijedi:
+
+#### HTTP Request
+
+`GET {{GATEWAYHOST}}/v/1/integrator/external/workflow/correlation/query`
+
+Ukoliko želite testirati zahtjeve na testnom okruženju, u tablici niže možete pronaći demo gateway host. Autorizacijski ključ potrebno je zatražiti od Vizibita, te ga dodati u header ili upisati kao query parametar (authorization_key) zahtjeva koji želite testirati.
+
+#### Query Parametri
+
+Parametar | Vrijednost
+--------- | -----------
+**GATEWAYHOST** | https://demo.signator.eu
+**authorization_key** | Vaš autorizacijski ključ. Potrebno ga je dodati u header zahtjeva ili kao **query** parametar.
+
+Ulazni parametri zahtjeva koji se šalju u adresi zahtjeva nalaze se unutar vitičastih zagrada((npr. "/v/1/document/**{{document_id}}**/attributes/").)
+
+
+#### Funkcija: GetWorkflowsByCorrelationId
+
+Dohvati sve tijekova rada koji sadrže jednaki correlation id
+
+`GET {{GATEWAYHOST}}/v/1/integrator/external/workflow/correlation/query`
+
+> Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
+
+```json
+[
+    {
+        "DocumentName": "dokument.pdf",
+        "StartedAt": 1651489000,
+        "Url": "{{GATEWAYHOST}}/#/document/2501",
+        "Status": "PENDING"
+    },
+    {
+        "DocumentName": "dokument.pdf",
+        "StartedAt": 1651489001,
+        "Url": "{{GATEWAYHOST}}/#/document/2502",
+        "Status": "PENDING"
+    },
+    {
+        "DocumentName": "dokument.pdf",
+        "StartedAt": 1651489084,
+        "Url": "{{GATEWAYHOST}}/#/document/2503",
+        "Status": "PENDING"
+    },
+    {
+        "DocumentName": "dokument.pdf",
+        "StartedAt": 1651489151,
+        "Url": "{{GATEWAYHOST}}/#/document/2505",
+        "Status": "PENDING"
+    }
+]
+```
+
+**Query Parametri**
+
+Parametar | Zadano | Opis
+--------- | ------- | -----------
+**correlation_ids** |  | Polje prema kojem se dohvaćaju zajednički tijekovi rada.
+
+
+Moguće vrijednosti polja status:
+
+Status |Opis
+--------- | -----------
+**FINISHED** | svi sudionici rada su potpisali/odobrili dokument
+**CANCELED** | inicijator tijeka rada je otkazao tijek rada
+**REJECTED** | netko od sudionika tijeka rada je odbio potpisati/odobriti dokument
+**PENDING** | čeka se akcija nekog od sudionika tijeka rada
+**DELETED** | tijek rada je obrisan
+**DRAFT** | tijek rada je definiran, ali nema sudionika
+
+##Error codes
+
+All errors return the HTTP status code 400, unless an unforeseen situation has occurred. In that case HTTP status code is 500.
+
+All errors are returned as **JSON**.
+
+List of possible errors
+
+Error Code | Meaning
+---------- | -------
+1001 | JWT token has expired
+6001 | Missing correlation id
+
+In case of an error, the processing is interrupted and the error response is returned to the caller.
