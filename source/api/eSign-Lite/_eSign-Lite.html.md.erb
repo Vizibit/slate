@@ -1,16 +1,16 @@
-# **Simple signer workflow API**
+# **eSign-Lite workflow API**
 
-## Simple signer workflow introduction
+## eSign-Lite workflow introduction
 
 Simple signature workflow integration enables 3rd party systems to easily integrate digital signature in their application, with minimal changes to the their existing codebase.
 
 This integration is targeted for existing systems that already have an UI, and want to add the digital signature support.
 
 ####Components
-The integration consist of two main components: **"Signature workflow API"** and the **"Simple signer JS SDK"**
+The integration consist of two main components: **"Signature workflow API"** and the **"eSign-Lite JS SDK"**
 
 - **Signature workflow API** - Exposes an API endpoint that receives the document for signature and two callbacks (OnSignedCallback and OnErrorCallback)
-- **Simple signer JS SDK** - Javascript library that handles the PDF viewing, and the user input required to complete the remote signature
+- **eSign-Lite JS SDK** - Javascript library that handles the PDF viewing, and the user input required to complete the remote signature
 
 The application can be used in a **cloud environment** or a **on-premise** installation.
 
@@ -21,13 +21,13 @@ As seen in the diagram below, the integration flow is as follows:
 2. Your backend prepares the PDF document, and defines the **OnSignedCallback and OnErrorCallback** callbacks.
 After everything is prepared your backend sends a **HTTP POST** request to "**Signature workflow API**" `{{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`, and if everything is correct the API responds with a object that contains a "**StorageId**" and "**SignatureToken**"
 3. Your backend communicates the "**StorageId**" and "**SignatureToken**" to your frontend UI application
-4. Your frontend UI constructs the "**Simple signer JS SDK**" with the received "**StorageId**" and "**SignatureToken**"
-5. The "**Simple signer JS SDK**" guides the user journey, offering him to add a signature image, to perform a user identification (e.g. video, autoident) if he doesn't have an account and perform the communication with our "**Simple Signer API**"
-6. When the signature is successful or failed, the "**Simple Signer API**" notifies the "**Signature workflow API**" about the signature status
+4. Your frontend UI constructs the "**eSign-Lite JS SDK**" with the received "**StorageId**" and "**SignatureToken**"
+5. The "**eSign-Lite JS SDK**" guides the user journey, offering him to add a signature image, to perform a user identification (e.g. video, autoident) if he doesn't have an account and perform the communication with our "**eSign-Lite API**"
+6. When the signature is successful or failed, the "**eSign-Lite API**" notifies the "**Signature workflow API**" about the signature status
 7. The "**Signature workflow API**" executes the correct callback to **notify your backend** about the signature status
 
 
-![Simple Signer Workflow api](images/simple_signer_workflow_diagram.png)
+![eSign-Lite Workflow api](images/simple_signer_workflow_diagram.png)
 
 ##Signature workflow API
 `POST {{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple`
@@ -69,7 +69,7 @@ Additionally the API exposes an additional optional field: "**ExpiresAt**".
 ```
 "StorageId" and "SignatureToken" are **Vizibit generated ids** that are **solely used by Vizibit**.
 
-Your application only needs to communicate the described fields to the "Simple signer JS SDK" constructor.
+Your application only needs to communicate the described fields to the "eSign-Lite JS SDK" constructor.
 
 The **WorkflowId** is returned on all requests so we can know exactly the workflow in question in case we need to do additional debugging.
 
@@ -133,7 +133,7 @@ All errors return the HTTP status code 400, unless an unforeseen situation has o
 
 All errors are returned as **JSON**.
 
-List of possible errors on Simple signer workflow interface
+List of possible errors on eSign-Lite workflow interface
 
 Error Code | Meaning
 ---------- | -------
@@ -176,9 +176,9 @@ In case of an error, the processing is interrupted and the error response is ret
 - The client is responsible for adequate care of the supplied JWT token
 - Data required for the signature purposes is never transmitted in plaintext, and the operation data is stored for audit trail purposes and the data processing can be seen in our Privacy policy
 
-# **Simple signer JS SDK**
-## Simple signer JS SDK introduction
-> Embedding Simple Signer JS SKD
+# **eSign-Lite JS SDK**
+## eSign-Lite JS SDK introduction
+> Embedding eSign-Lite JS SKD
 
 ```html
 <head>
@@ -194,14 +194,14 @@ In case of an error, the processing is interrupted and the error response is ret
 ```
 **Installation and usage**
 
-In order to use **Simple signer** Javascript SDK in your web application/site, it is necessary to embed **Simple signer JavaScript** and **CSS** files in your **HTML** document, as shown in example on the right.
+In order to use **eSign-Lite** Javascript SDK in your web application/site, it is necessary to embed **eSign-Lite JavaScript** and **CSS** files in your **HTML** document, as shown in example on the right.
 
-There are two **Simple signer** Javascript SDK interfaces available:
+There are two **eSign-Lite** Javascript SDK interfaces available:
 
 - **Interface 1**: complete signing process (with PDF preview)
 - **Interface 2**: simple signing process (without PDF preview)
 
-## Simple signer JS SDK interface
+## eSign-Lite JS SDK interface
 ###Interfaces
 ####Signator.signWithPdfViewer
 **Interface 1**
@@ -303,7 +303,7 @@ This callback is invoked in case of error during signing process and returns err
 [Error codes](#simple-signer-js-sdk-interface-error-feedback)
 
 
-###Simple signer JS SDK interface error feedback
+###eSign-Lite JS SDK interface error feedback
 
 Error Code | Meaning
 ---------- | -------
@@ -328,7 +328,7 @@ interface UserData {
  "location": string
 }
 ```
-**Types used in Simple signer JS SDK**
+**Types used in eSign-Lite JS SDK**
 
 Name | Type
 ---------- | -------
