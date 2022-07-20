@@ -40,13 +40,17 @@ After everything is prepared your backend sends a **HTTP POST** request to "**Si
   "OnSignedCallback": "{{Signed document callback url}}",
   "OnErrorCallback": "{{Signing error callback url}}"
   "ExpiresAt": "{{Unix UTC timestamp for expiry}}"
+  "HttpAuthorizationHeader": "{{HTTP authorization header value}}"
+  "HttpMethod": "{{POST or PUT, POST is the default value}}"
 }
 ```
 The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "**OnErrorCallback**".
 
 - **Document** - PDF document for signature in **base64** encoding (**with padding**)
-- **OnSignedCallback** -The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **successful**.
-- **OnErrorCallback** - The "Signature workflow API" will call this url with HTTP POST, this will be called when the signature is **not successful**.
+- **OnSignedCallback** -The "Signature workflow API" will call this url with HTTP POST or PUT, this will be called when the signature is **successful**.
+- **OnErrorCallback** - The "Signature workflow API" will call this url with HTTP POST or PUT, this will be called when the signature is **not successful**.
+- **HttpAuthorizationHeader** - The caller can define the 'Authorization' header, the header will be used to authenticate to the service. If you leave this empty no authorization header will be sent. **This is an optional field**.
+- **HttpMethod** - The caller can define if they want to use the HTTP POST or HTTP PUT method. If you leave this empty HTTP POST will be used. **This is an optional field**.
 
 Additionally the API exposes an additional optional field: "**ExpiresAt**".
 
