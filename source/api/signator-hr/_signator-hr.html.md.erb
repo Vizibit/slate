@@ -29,6 +29,31 @@ Parametar | Vrijednost
 
 Ulazni parametri zahtjeva koji se šalju u adresi zahtjeva nalaze se unutar vitičastih zagrada((npr. "/v/1/document/**{{document_id}}**/attributes/").)
 
+## Autorizacija
+
+### Autorizacija prema Signator sučelju
+
+Autorizacija na Signator sučelje izvedena je korištenjem JWT tokena.
+
+Izvođač mora zatražiti JWT token od Vizibita (različiti tokeni će se koristiti za testno i produkcijsko okruženje, kao i za komunikaciju prema različitim sustavima).
+
+**Token sadržava:**
+
+* Trajanje pristupa
+* Identifikator usluge koja pristupa sučelju
+
+**JWT token se prema sučelju šalje na jedan od sljedećih načina:**
+
+* U query parametru authorization_key
+* U header-u zahtjeva kao AuthorizationKey parametar
+
+### Autorizacija prema sučelju Sustava X
+
+Izvođač mora odabrati jedan od ponuđenih modela autorizacije na svoj sustav:
+
+* Basic authentication
+* JWT tokens
+
 ## Elektroničko potpisivanje dokumenta (e-Potpis)
 
 Standardni koraci ovjere dokumenta digitalnim potpisom uključuju nekoliko faza:
@@ -952,32 +977,6 @@ Nakon što je korisnik popunio obrazac, Signator ga šalje u obliku PDF-a, zajed
 ### Opis modela iz perspektive Sustava X (Sustav X → Signator)
 
 #### [Funkcija: UpdateDocumentAttributes](#funkcija-updatedocumentattributes)
-
-
-## Autorizacija
-
-### Autorizacija prema Signator sučelju
-
-Autorizacija na Signator sučelje izvedena je korištenjem JWT tokena.
-
-Izvođač mora zatražiti JWT token od Vizibita (različiti tokeni će se koristiti za testno i produkcijsko okruženje, kao i za komunikaciju prema različitim sustavima).
-
-**Token sadržava:**
-
-* Trajanje pristupa
-* Identifikator usluge koja pristupa sučelju
-
-**JWT token se prema sučelju šalje na jedan od sljedećih načina:**
-
-* U query parametru authorization_key
-* U header-u zahtjeva kao AuthorizationKey parametar
-
-### Autorizacija prema sučelju Sustava X
-
-Izvođač mora odabrati jedan od ponuđenih modela autorizacije na svoj sustav:
-
-* Basic authentication
-* JWT tokens
 
 ## Pozicioniranje slike potpisa/pečata
 Slika ispod objašnjava način na koji funkcionira opcija pozicioniranja slike potpisa/pečata koja se koristi u funkcijama [StartApprovalProcess](#funkcija-startapprovalprocess) i [SealDocumentWithPositionedText](#opcija-2-polu-automatsko-pokretanje-procesa-ovjere).
