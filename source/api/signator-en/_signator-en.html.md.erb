@@ -184,12 +184,6 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
 
 `POST {{GATEWAYHOST}}/v/1/document/`
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
   - function name: **StartApprovalProcess**
   - implemented in: Signator
   - caller: SystemX
@@ -283,12 +277,6 @@ Document can be delivered to the user of Signator application for inspection in 
 
 `POST {{GATEWAYHOST}}/v/1/document/delivery/`
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
   - function name: ShareFileToRecepient
   - implemented in: Signator
   - caller: SystemX
@@ -346,12 +334,6 @@ Parameter | Default | Description
 --------- | ------- | -----------
 document_id |  | Id of the document.
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
   - function name: **GetDocumentAttributes**
   - implemented in: Signator
   - caller: SystemX
@@ -403,12 +385,6 @@ Parameter | Default | Description
 - Retrieve document statuses by documentID
 
 `POST {{GATEWAYHOST}}/v/1/document/status/`
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **GetDocumentStatus**
   - implemented in: Signator
@@ -464,12 +440,6 @@ Parameter | Default | Description
 Parameter | Default | Description
 --------- | ------- | -----------
 document_id |  | Id of the document.
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **GetApprovedDocument**
   - implemented in: Signator
@@ -529,12 +499,6 @@ Parameter | Default | Description
 Parameter | Default | Description
 --------- | ------- | -----------
 document_id |  | Id of the document.
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **UpdateDocumentAttributes**
   - implemented in: Signator
@@ -597,12 +561,6 @@ Parameter | Default | Description
 
 - Function checks if all digital signatures are valid and qualified.
 
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **VerifyDocumentCertificates**
   - implemented in: Signator
@@ -678,12 +636,6 @@ Proposal for implementation of the integration interface on the system integrato
 
 After the document is digitally signed, Signator calls the function on the SystemX side to pass it the digitally signed document.
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **FinishApprovalProcess**
 - implemented in: SystemX
 - caller: Signator
@@ -741,12 +693,6 @@ Parameter | Default | Description
 ```
 
 - Get all document attributes by documentID
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **GetDocumentAttributes**
   - implemented in:systemX:
@@ -850,12 +796,6 @@ Sealing a document with a fixed layout and the position of the seal itself.
 
 This option is intended for sealing a document with predefined dimensions and the appearance of the seal in accordance with the electronic deed. The document must have a defined blank space at the bottom of the page because the visual part of the electronic seal will be copied over that part.
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **SealDocumentWithFixedElectronicDeed**
 - implemented in: Signator
 - caller: SystemX
@@ -934,12 +874,6 @@ Seal a document with arbitrary text in the visual part of the seal and arbitrary
 
 `POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/positioned/`
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **SealDocumentWithPositionedText**
 - implemented in: Signator
 - caller: SystemX
@@ -995,12 +929,6 @@ Sealing document with some text with fixed position.
 ```
 
 `POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/fixed/`
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
 - function name: **SealDocumentWithFixedText**
 - implemented in: Signator
@@ -1063,12 +991,6 @@ Example of the seal image layout with **arbitrary text** which is added to the v
 Sealing a document with image and seal position.
 
 `POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/image/positioned/`
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
 - function name: **SealDocumentWithPositionedImage**
 - implemented in: Signator
@@ -1136,12 +1058,6 @@ Proposal for implementation of the integration interface on the system integrato
 
 Function ensures that the document is saved to the central document management system if one exists (it can be DMS, eArchive, RMS, etc.).
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **StoreDocument**
 - implemented in: SystemX
 - caller: Signator
@@ -1194,12 +1110,6 @@ External users have the ability to authenticate a document by scanning a QR code
 ```
 
 The function provides a call from an external user who wants to verify a document by scanning a QR code drawn on the visual part of the seal or entering the URL of the verification page.
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
 - function name: **VerifyDocumentAuthenticity**
 - implemented in: SystemX
@@ -1309,12 +1219,6 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
 - After user filled the form Signator sends it in PDF format, together with filled fields in JSON format, to SystemX
 
 `POST {{GATEWAYHOST}}/v/1/integrator/submitted_form/`
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **StoreSubmittedForm**
   - implemented in: SystemX
