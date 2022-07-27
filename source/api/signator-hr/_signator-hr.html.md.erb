@@ -121,7 +121,13 @@ Definicija Signator sučelja za e-Potpis nalazi se ovdje.
 
 Sustav X šalje dokument koji treba ovjeriti jedna ili više osoba u Signator sustavu.
 
-`POST {{GATEWAYHOST}}/v/1/document/`
+`POST {{GATEWAYHOST}}/v/1/document/{{calling_system}}`
+
+**Route Values**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+calling_system |  | identifikator pozivajućeg sustava
 
 > JSON Body ulaz:
 
