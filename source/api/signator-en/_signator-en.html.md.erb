@@ -182,7 +182,13 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
 
 - SystemX sends a document to be digitally signed by one or more persons to Signator system
 
-`POST {{GATEWAYHOST}}/v/1/document/`
+`POST {{GATEWAYHOST}}/v/1/document/{{calling_system}}`
+
+**Route Values**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+calling_system |  | identifier for the calling system
 
   - function name: **StartApprovalProcess**
   - implemented in: Signator
