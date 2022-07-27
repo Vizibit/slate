@@ -230,12 +230,6 @@ Korisniku Signator aplikacije moguće je dostaviti dokument na uvid na nekoliko 
 }
 ```
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 *   naziv funkcije: **ShareFileToRecepient**
 *   implementirano u: Signator
 *   poziva: Sustav X
@@ -275,12 +269,6 @@ Parametar | Zadano | Opis
 --------- | ------- | -----------
 document_id |  | Id dokumenta.
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 *   naziv funkcije: **GetDocumentAttributes**
 *   implementirano u: Signator
 *   poziva: Sustav X
@@ -316,12 +304,6 @@ Dohvati statuse dokumenta prema documentID.
 ]
 ```
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 *   naziv funkcije: **GetDocumentStatus**
 *   implementirano u: Signator
 *   poziva: Sustav X
@@ -336,7 +318,7 @@ Parametar | Zadano | Opis
       *   “PENDING” - čeka se akcija nekog od sudionika tijeka rada
       *   “DELETED” - tijek rada je obrisan
       *   “DRAFT” - tijek rada je definiran, ali nema sudionika
-  
+
 #### Funkcija: GetApprovedDocument
 
 Dohvati potpisani dokument.
@@ -356,12 +338,6 @@ Dohvati potpisani dokument.
 Parametar | Zadano | Opis
 --------- | ------- | -----------
 document_id |  | Id dokumenta.
-
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
 
 *   naziv funkcije: **GetApprovedDocument**
 *   implementirano u: Signator
@@ -386,7 +362,7 @@ Ažuriraj atribute dokumenta.
     "attributeKey": "string",
     "attributeValue": "string"
   }
-] 
+]
 ```
 
 > Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
@@ -402,12 +378,6 @@ Ažuriraj atribute dokumenta.
 Parametar | Zadano | Opis
 --------- | ------- | -----------
 document_id |  | Id dokumenta.
-
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
 
 *   naziv funkcije: **UpdateDocumentAttributes**
 *   implementirano u: Signator
@@ -452,12 +422,6 @@ Funkcija provjerava jesu li svi digitalni potpisi valjani i kvalificirani.
 }
 ```
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 *   naziv funkcije: **VerifyDocumentCertificates**
 *   implementirano u: Signator
 *   poziva: Sustav X
@@ -475,7 +439,7 @@ Parametar | Zadano | Opis
       *   “Subject” - informacije o potpisniku
       *   “Status” - status potpisa
       *   “Type” - tip potpisa
-  
+
 #### Napomene
 
 * Sučelja koriste REST za pozive na Signator API
@@ -517,12 +481,6 @@ Nakon što je dokument ovjeren, Signator poziva funkciju na strani Sustava X kak
   "documentId": 123
 }
 ```
-
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
 
 * naziv funkcije: **FinishApprovalProcess**
 * implementirano u: Sustav X
@@ -566,12 +524,6 @@ Dohvati sve atribute dokumenta prema documentID.
 ]
 ```
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 * naziv funkcije: **GetDocumentAttributes**
 * implementirano u: Sustav X
 * poziva: Signator
@@ -580,7 +532,7 @@ Parametar | Zadano | Opis
 
 * izlazni rezultat:
   * DocumentAttributes[attributeKey\*, attributeValue\*] - lista naziva atributa i njihovih vrijednosti koje su definirane u Sustav X
-  
+
 #### Napomena
 
 Izvođač može sam definirati naziv endpointa, dok format samog zahtjeva i odgovora trebaju biti u formatu navedenom u definiciji.
@@ -660,12 +612,6 @@ Ova opcija namijenjena je za pečatiranje dokumenta s predefiniranim dimenzijama
 }
 ```
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 * naziv funkcije: **SealDocumentWithFixedElectronicDeed**
 * implementirano u: Signatoru
 * poziva: Sustav X
@@ -726,12 +672,6 @@ Pečatiranje dokumenta s proizvoljnim tekstom u vizualnom dijelu pečata i proiz
 
 > Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 * naziv funkcije: **SealDocumentWithPositionedText**
 * implementirano u: Signatoru
 * poziva: Sustav X
@@ -752,7 +692,7 @@ Parametar | Zadano | Opis
 
 * izlazni rezultat:
   * Binary response s content typeom “application/pdf”
-  
+
 #### Opcija 3: ePečat s proizvoljnim tekstom i fiksnom pozicijom
 
 Pečatiranje dokumenta s proizvoljnim tekstom ali fiksiranom pozicijom.
@@ -769,12 +709,6 @@ Pečatiranje dokumenta s proizvoljnim tekstom ali fiksiranom pozicijom.
 ```
 
 > Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
-
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
 
 * naziv funkcije: **SealDocumentWithFixedText**
 * implementirano u: Signatoru
@@ -819,12 +753,6 @@ Pečatiranje dokumenta s proizvoljnom slikom i pozicijom pečata.
 ```
 
 > Ako se poziv metode uspješno obavi dobije se odgovor **200 OK** s JSON body:
-
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
 
 * naziv funkcije: **SealDocumentWithPositionedImage**
 * implementirano u: Signatoru
@@ -873,12 +801,6 @@ Funkcija osigurava spremanje dokumenta u centralnu pohranu dokumenata ukoliko is
 }
 ```
 
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
-
 * naziv funkcije: **StoreDocument**
 * implementirano u: SustavuX
 * poziva: Signator
@@ -915,12 +837,6 @@ Funkcija osigurava poziv od strane vanjskog korisnika koji želi verificirati do
   "AutenthicityDocument": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
 }
 ```
-
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
 
 * naziv funkcije: **VerifyDocumentAuthenticity**
 * implementirano u: SustavuX
@@ -1013,12 +929,6 @@ Nakon što je korisnik popunio obrazac, Signator ga šalje u obliku PDF-a, zajed
   "documentId": 123
 }
 ```
-
-**Query Parametri**
-
-Parametar | Zadano | Opis
---------- | ------- | -----------
-**authorization_key** |  | Autorizira korisnika.
 
 * naziv funkcije: **StoreSubmittedForm**
 * implementirano u: Sustavu X
