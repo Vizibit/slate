@@ -176,6 +176,31 @@ In case of an error, the processing is interrupted and the error response is ret
 - The client is responsible for adequate care of the supplied JWT token
 - Data required for the signature purposes is never transmitted in plaintext, and the operation data is stored for audit trail purposes and the data processing can be seen in our Privacy policy
 
+#Using the prebuild signer
+If you don't want to perform a integration of our JS API in your application, you can use our prebuilt signer.
+
+The signer allows you to perform the signature in a new webpage without the need for coding in your existing UI.
+
+###Usage
+```json
+{
+  "StorageId": "{{Vizibit system generated storage id}}",
+  "SignatureToken": "{{Vizibit system generated signature token}}",
+  "WorkflowId": "{{Internal workflow id}}"
+}
+
+```
+
+```plaintext
+Example link
+https://esign-lite-demo.signator.eu/?storage_id=a0958fc5a51&signature_token=a0958fc5a5124613b
+
+```
+After you receive the following response from our API you just need to format the following URL:
+
+{{**GATEWAYHOST**}}?storage_id={{**StorageId**}}&signature_token={{**SignatureToken**}}
+
+
 # **eSign-Lite JS SDK**
 ## eSign-Lite JS SDK introduction
 > Embedding eSign-Lite JS SKD
