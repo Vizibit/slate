@@ -29,6 +29,32 @@ Parameter | Value
 
 Parameter sent in request need to be inserted instead of parameter's name in curly brackets (e.g. "/v/1/document/**{{document_id}}**/attributes/").
 
+## Authorization
+
+### Authorization to the Signator interface
+
+Authorization to the Signator interface is performed using a JWT token.
+
+The contractor must request a JWT token from Vizibit (different tokens will be used for the test and production environment, as well as for communication to different systems).
+
+**The token contains:**
+
+- duration of the access
+- identifier of the service accessing the interface
+
+**JWT token is sent to the interface in one of the following ways:**
+
+- in the query parameter **authorization\_key**
+- in the request header as **Authorization** parameter
+- in the request header as **Bearer Token**
+
+### Authorization to the System X interface
+
+The contractor must select one of the offered authorization models :
+
+- Basic authentication
+- JWT tokens
+
 ## Digital signing of a document (e-Signature)
 
 Usual steps for digital signing of a document includes several phases:
@@ -109,9 +135,7 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
         "widgetOffsetX": 100,
         "widgetOffsetY": 200,
         "widgetWidth": 300,
-        "widgetHeight": 150,
-        "data": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
-        "fileType": "JPEG"
+        "widgetHeight": 150
       }
     }
   ],
@@ -158,13 +182,13 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
 
 - SystemX sends a document to be digitally signed by one or more persons to Signator system
 
-`POST {{GATEWAYHOST}}/v/1/document/`
+`POST {{GATEWAYHOST}}/v/1/document/{{calling_system}}`
 
-**Query Parameters**
+**Route Values**
 
 Parameter | Default | Description
 --------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
+calling_system |  | identifier for the calling system
 
   - function name: **StartApprovalProcess**
   - implemented in: Signator
@@ -187,8 +211,6 @@ Parameter | Default | Description
           - &quot;widgetOffsetY&quot;\* - offset from the lower left corner along the y axis.
           - &quot;widgetWidth&quot;\* - the width of the image widget (if the document has a defined signature field this value is ignored).
           - &quot;widgetHeight&quot;\* - height of the image widget (if the document has a defined signature field this value is ignored).
-          - &quot;data&quot;\* - signature image in base64 format
-          - &quot;fileType&quot;\* - signature image file type (can be JPEG or PNG)
     - Attachments [file\*, fileType, fileName\*] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
       - &quot;file&quot; - attachment in base64 format
       - &quot;fileType&quot; - document type
@@ -259,12 +281,6 @@ Document can be delivered to the user of Signator application for inspection in 
 
 `POST {{GATEWAYHOST}}/v/1/document/delivery/`
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
   - function name: ShareFileToRecepient
   - implemented in: Signator
   - caller: SystemX
@@ -322,12 +338,6 @@ Parameter | Default | Description
 --------- | ------- | -----------
 document_id |  | Id of the document.
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
   - function name: **GetDocumentAttributes**
   - implemented in: Signator
   - caller: SystemX
@@ -379,12 +389,6 @@ Parameter | Default | Description
 - Retrieve document statuses by documentID
 
 `POST {{GATEWAYHOST}}/v/1/document/status/`
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **GetDocumentStatus**
   - implemented in: Signator
@@ -440,12 +444,6 @@ Parameter | Default | Description
 Parameter | Default | Description
 --------- | ------- | -----------
 document_id |  | Id of the document.
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **GetApprovedDocument**
   - implemented in: Signator
@@ -505,12 +503,6 @@ Parameter | Default | Description
 Parameter | Default | Description
 --------- | ------- | -----------
 document_id |  | Id of the document.
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **UpdateDocumentAttributes**
   - implemented in: Signator
@@ -573,12 +565,6 @@ Parameter | Default | Description
 
 - Function checks if all digital signatures are valid and qualified.
 
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **VerifyDocumentCertificates**
   - implemented in: Signator
@@ -654,12 +640,6 @@ Proposal for implementation of the integration interface on the system integrato
 
 After the document is digitally signed, Signator calls the function on the SystemX side to pass it the digitally signed document.
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **FinishApprovalProcess**
 - implemented in: SystemX
 - caller: Signator
@@ -717,12 +697,6 @@ Parameter | Default | Description
 ```
 
 - Get all document attributes by documentID
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
   - function name: **GetDocumentAttributes**
   - implemented in:systemX:
@@ -826,12 +800,6 @@ Sealing a document with a fixed layout and the position of the seal itself.
 
 This option is intended for sealing a document with predefined dimensions and the appearance of the seal in accordance with the electronic deed. The document must have a defined blank space at the bottom of the page because the visual part of the electronic seal will be copied over that part.
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **SealDocumentWithFixedElectronicDeed**
 - implemented in: Signator
 - caller: SystemX
@@ -910,12 +878,6 @@ Seal a document with arbitrary text in the visual part of the seal and arbitrary
 
 `POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/positioned/`
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **SealDocumentWithPositionedText**
 - implemented in: Signator
 - caller: SystemX
@@ -971,12 +933,6 @@ Sealing document with some text with fixed position.
 ```
 
 `POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/fixed/`
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
 - function name: **SealDocumentWithFixedText**
 - implemented in: Signator
@@ -1039,12 +995,6 @@ Example of the seal image layout with **arbitrary text** which is added to the v
 Sealing a document with image and seal position.
 
 `POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/image/positioned/`
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
 - function name: **SealDocumentWithPositionedImage**
 - implemented in: Signator
@@ -1112,12 +1062,6 @@ Proposal for implementation of the integration interface on the system integrato
 
 Function ensures that the document is saved to the central document management system if one exists (it can be DMS, eArchive, RMS, etc.).
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
 - function name: **StoreDocument**
 - implemented in: SystemX
 - caller: Signator
@@ -1170,12 +1114,6 @@ External users have the ability to authenticate a document by scanning a QR code
 ```
 
 The function provides a call from an external user who wants to verify a document by scanning a QR code drawn on the visual part of the seal or entering the URL of the verification page.
-
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
 
 - function name: **VerifyDocumentAuthenticity**
 - implemented in: SystemX
@@ -1286,12 +1224,6 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
 
 `POST {{GATEWAYHOST}}/v/1/integrator/submitted_form/`
 
-**Query Parameters**
-
-Parameter | Default | Description
---------- | ------- | -----------
-**authorization_key** |  | Indicates the user and his authorities.
-
   - function name: **StoreSubmittedForm**
   - implemented in: SystemX
   - caller : Signator
@@ -1315,32 +1247,6 @@ Parameter | Default | Description
 ### Model description from the SystemX perspective (SystemX → Signator)
 
 [Function: UpdateDocumentAttributes](#function-updatedocumentattributes)
-
-
-## Authorization
-
-### Authorization to the Signator interface
-
-Authorization to the Signator interface is performed using a JWT token.
-
-The contractor must request a JWT token from Vizibit (different tokens will be used for the test and production environment, as well as for communication to different systems).
-
-**The token contains:**
-
-- duration of the access
-- identifier of the service accessing the interface
-
-**JWT token is sent to the interface in one of the following ways:**
-
-- in the query parameter **authorization\_key**
-- in the request header as **AuthorizationKey** parameter
-
-### Authorization to the System X interface
-
-The contractor must select one of the offered authorization models :
-
-- Basic authentication
-- JWT tokens
 
 ## Positioning of the signature image/seal
 
