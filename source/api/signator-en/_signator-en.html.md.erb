@@ -941,6 +941,7 @@ Sealing document with some text with fixed position.
 - input parameters:
   - &quot;File&quot;\* - document to be sealed
   - &quot;Text&quot;\* - text to be added to the visual part of the seal
+  - &quot;ExternalSignerRegistryId&quot; - Optional parameter, this parameter enables switching between multiple different signing certificates when performing the eseal call
 - output:
   - binary response with &quot;application/pdf&quot; content type
 
@@ -1014,6 +1015,7 @@ Sealing a document with image and seal position.
       - &quot;Location&quot; - lokacija na kojoj je nastao potpis
       - &quot;SignerContactInfo&quot; - informacije o potpisniku
       - &quot;SignerName&quot; - ime potpisnika
+  - &quot;ExternalSignerRegistryId&quot; - Optional parameter, this parameter enables switching between multiple different signing certificates when performing the eseal call
 - output:
   - binary response with &quot;application/pdf&quot; content type
 
