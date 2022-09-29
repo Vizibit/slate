@@ -155,16 +155,13 @@ You need to send the **WidgetOffsetX** (**LLX** in the image) and **WidgetOffset
 
 ```json
 {
-
-  "SignatureImage": {
-    "ImageAttachments": {
-      "Images": [{
-        "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
-        "FileName":"image.png",
-        "FileType": "JPEG or PNG"
-      }],
-      "AddAsPdfAttachments": false
-    }
+  "ImageAttachments": {
+    "Images": [{
+      "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+      "FileName":"image.png",
+      "FileType": "JPEG or PNG"
+    }],
+    "AddAsPdfAttachments": false
   }
 }
 
@@ -204,12 +201,9 @@ All of the above cases support adding pdf attachments to the document. The attac
 ####  The "AddAsPdfAttachments" flag
 ```json
 {
-
-  "SignatureImage": {
-    "PdfAttachments": {
-      "Pdfs": [{"File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=", "FileName":"file.pdf"}],
-      "AddAsPdfAttachments": false
-    }
+  "PdfAttachments": {
+    "Pdfs": [{"File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=", "FileName":"file.pdf"}],
+    "AddAsPdfAttachments": false
   }
 }
 
