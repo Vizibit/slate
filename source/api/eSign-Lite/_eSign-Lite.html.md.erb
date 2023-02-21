@@ -243,6 +243,7 @@ Signator.signWithPdfViewer(
   endpointUrl: "{{string containing signing service base URL}}",
   storageId: "{{Vizibit system generated storage id}}",
   signatureToken: "{{Vizibit system generated signature token}}",
+  signatureImageData: "{{object containing signature image data}"
   userData: "{{object containing signature options and signee data}}",
   onSign: "{{callback function invoked on successful signing of the document}}",
   onError: "{{callback function invoked in case of error}}",
@@ -257,7 +258,8 @@ Name | Description
 **endpointUrl**| signing API endpoint URL
 **storageId** | document ID from the storage
 **signatureToken** | signature JWT token
-**userData** | object containing signature options/user data, *optional*
+**signatureImageData** | object containing signature image data, required if using [fastSignOption](#additional-options), otherwise *optional*
+**userData** | object containing signature options/user data, required if using [fastSignOption](#additional-options) or [directSignOption](#additional-options), otherwise *optional*
 **onSign** | callback function invoked on successful signing of the document, *optional*
 **onError** | callback function invoked in case of error, *optional*
 **options** | options object, *optional*
@@ -292,7 +294,7 @@ Name | Description
 ---------- | -------
 **endpointUrl** | signing API endpoint URL
 **signatureToken** | signature JWT token
-**userData** | object containing signature options/user data, *optional*
+**userData** | object containing signature options/user data,  required if using [directSignOption](#additional-options), otherwise *optional*
 **onSign** | callback function invoked on successful signing of the document, *optional*
 **onError** | callback function invoked in case of error, *optional*
 **options** | options object, *optional*
@@ -320,7 +322,7 @@ This callback is invoked if document signing was successful and returns signed d
   console.log(errorCode);
 }
 ```
-This callback is invoked in case of error during signing process and returns error code in string format.
+This callback is invoked in case of error during signing process and returns error code in number format.
 
 
 [Error codes](#simple-signer-js-sdk-interface-error-feedback)
@@ -337,11 +339,14 @@ Error Code | Meaning
 40004 | Missing signature token
 40005 | Missing storage ID
 40006 | Unable to load document by specified storage ID
+40007 | Signature image widget height value is too low or too high
+40008 | Signature image widget width value is too low or too high
 40100 | Unable to sign document
 40200 | User does not have enough credits for signature
 40201 | Organization does not have enough credits for signature
 40202 | Unable to check available credits for provided phone number
 40300 | User does not have valid digital identity required for signing
+40400 | Unable to fetch signature image template
 
 ###Types
 ```ts
@@ -355,9 +360,26 @@ interface UserData {
  "location": string
 }
 
+interface SignatureImageData {
+ "LineOne": string
+ "LineTwo": string
+ "LineThree": string
+ "LineFour": string
+ "LogoImageData": string
+ "Page": number
+ "WidgetHeight": number
+ "WidgetOffsetX": number
+ "WidgetOffsetY": number
+ "WidgetWidth": number
+}
+
 interface Options {
  "directSignOption": boolean
  "digitalIdentOption": boolean
+ "fastSignOption": boolean
+ "signatureImageWidth": number
+ "signatureImageHeight": number
+ "allowSignatureImageResize": boolean
  "language": string
 }
 ```
@@ -369,6 +391,7 @@ Name | Type
 **storageId**  | string
 **signatureToken**  | string
 **htmlElementId**  | string
+**signatureImageData** | SignatureImageData
 **userData**  | UserData
 **onSign**  | function
 **onError**  | function
@@ -376,16 +399,34 @@ Name | Type
 
 ###Additional options
 
+**fastSignOption**
+
+If set to true, this option will preselect all the signature parameters (jurisdiction, provider, level and phone number) and start the document signing automatically after user presses "Sign" button with predefined signature image.
+User won't be able to change any of defined signature parameters.
+It is required to specify all the signature parameters and signature image data when invoking eSign-Lite interfaces for this option to work.
+
 **directSignOption**
 
-If set to true, this option will preselect all the signature parameters and start the document signing automatically after user presses "Sign" button.
+If set to true, this option will preselect all the signature parameters and start the document signing automatically after user presses "Sign" button. End user will be able to define custom signature image.
 User won't be able to change any of defined signature parameters.
-It is required to specify all the signature parameters when invoking eSign-Lite interfaces (jurisdiction, provider, level and phone number) for this option to work.
+It is required to specify all the signature parameters (jurisdiction, provider, level and phone number) when invoking eSign-Lite interfaces for this option to work.
 
 **digitalIdentOption**
 
 If set to false, service for digital identity check won't be invoked. In case user doesn't have valid digital identity, document signing will be unsuccessful and error will be thrown.
 If set to true and user doesn't have digital identity, digital identity creation wizard will be shown to user.
+
+**signatureImageWidth**
+
+Define default width of signature image widget. Default value is 150, minimum value is 50 and maximum value is 300.
+
+**signatureImageHeight**
+
+Define default height of signature image widget. Default value is 75, minimum value is 25 and maximum value is 150.
+
+**allowSignatureImageResize**
+
+If set to false, end user won't be able to resize signature image widget. Default option is true.
 
 # Prerequisites
 > Following examples will use **authorization as query parameter**.
