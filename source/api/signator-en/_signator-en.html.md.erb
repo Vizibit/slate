@@ -130,7 +130,7 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
       "email": "example.address@domain.com",
       "role": "SIGNER",
       "signatureLevel": "QES",
-      "SignatureImage": {
+      "signatureImage": {
         "page": 1,
         "widgetOffsetX": 100,
         "widgetOffsetY": 200,
@@ -151,6 +151,10 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
       "attributeKey": "string",
       "attributeValue": "string"
     }
+  ],
+  "deliveryAddresses": [
+    "example.address@demo.eu",
+    "example.demo@address.eu"
   ]
 }
 ```
@@ -160,7 +164,8 @@ Definition of the Signator interface for the e-Signature can be found [here](htt
 ```json
 {
   "documentId": 123,
-  "documentUrl": "esign.example.com/#/v/1/document/3"
+  "documentUrl": "https://esign.example.com/#/upload/v/1/documents/123"
+  "documentSignUrl": "https://esign.example.com/#/v/1/documents/123"
 }
 ```
 
@@ -197,7 +202,7 @@ calling_system |  | identifier for the calling system
   - input parameters:
     - &quot;file&quot;\* - pdf document in base64 format
     - &quot;fileType&quot; - file type
-    - &quot;FileName&quot;\* - name of the pdf document to digitally sign
+    - &quot;fileName&quot;\* - name of the pdf document to digitally sign
     - &quot;initiator&quot;\* - email of the person who sent the document from SystemX for digital signing
     - &quot;participants&quot; - [email, role, signatureLevel, signatureImage] - list of signers defined in sequential order (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
       - &quot;email&quot;\* - email address of the signer
@@ -205,22 +210,24 @@ calling_system |  | identifier for the calling system
           - Note: if APPROVER is sent, then the option &quot;SES&quot; must be selected in signature level
       - &quot;signatureLevel&quot;\*
           - signatureLevel possible values: &quot;QES&quot; (qualified signature), &quot;AES&quot; (advanced signature), &quot;SES&quot; (stamp). Applies to the SIGNER role only.
-      - [&quot;SignatureImage&quot; - signature image with values:](#positioning-of-the-signature-image-seal)
+      - [&quot;signatureImage&quot; - signature image with values:](#positioning-of-the-signature-image-seal)
           - &quot;page&quot;\* - page of the document on which the signature image will be positioned.
           - &quot;widgetOffsetX&quot;\* - offset from the lower left corner along the x axis.
           - &quot;widgetOffsetY&quot;\* - offset from the lower left corner along the y axis.
           - &quot;widgetWidth&quot;\* - the width of the image widget (if the document has a defined signature field this value is ignored).
           - &quot;widgetHeight&quot;\* - height of the image widget (if the document has a defined signature field this value is ignored).
-    - Attachments [file\*, fileType, fileName\*] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
+    - attachments [file\*, fileType, fileName\*] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
       - &quot;file&quot; - attachment in base64 format
       - &quot;fileType&quot; - document type
       - &quot;fileName&quot; - attachment name
-    - DocumentAttributes [attributeKey\*, attributeValue\*] - attribute list (those have to be agreed upon before implementation) which will be sent with the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
+    - attributes [attributeKey\*, attributeValue\*] - attribute list (those have to be agreed upon before implementation) which will be sent with the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
       - &quot;attributeKey&quot;
       - &quot;attributeValue&quot;
+    - deliveryAddresses[list<string>] - list of email addresses of users who do not participate in document verification, and to whom the signed document needs to be delivered upon completion of the signing
   - output:
     - &quot;documentId&quot;\* - ID of the document in the Signator system for later possible retrieval of the status and attributes of the document
-    - &quot;documentURL&quot; - link to open the document in edit mode in Signator so that the initiator can define all parameters of the signing workflow (signers, signature types, signature position)
+    - &quot;documentUrl&quot; - link to open the document in edit mode in Signator so that the initiator can define all parameters of the signing workflow (signers, signature types, signature position)
+    - &quot;documentSignUrl&quot; - link to open the document in signing mode in Signator so that the user can immediately start document signing
 
 ### **Optional functions**
 

@@ -142,7 +142,7 @@ calling_system |  | identifikator pozivajućeg sustava
       "email": "example.address@domain.com",
       "role": "SIGNER",
       "signatureLevel": "QES",
-      "SignatureImage": {
+      "signatureImage": {
         "page": 1,
         "widgetOffsetX": 100,
         "widgetOffsetY": 200,
@@ -164,7 +164,10 @@ calling_system |  | identifikator pozivajućeg sustava
       "attributeValue": "string"
     }
   ],
-  "addElectronicSealToFinishedDocument": "bool"
+  "deliveryAddresses": [
+    "example.address@demo.eu",
+    "example.demo@address.eu"
+  ]
 }
 ```
 
@@ -173,7 +176,8 @@ calling_system |  | identifikator pozivajućeg sustava
 ```json
 {
   "documentId": 123,
-  "documentUrl": "esign.example.com/#/v/1/document/3"
+  "documentUrl": "https://esign.example.com/#/upload/v/1/documents/123"
+  "documentSignUrl": "https://esign.example.com/#/v/1/documents/123"
 }
 ```
 
@@ -191,23 +195,25 @@ calling_system |  | identifikator pozivajućeg sustava
       + napomena: ukoliko se šalje APPROVER, onda se mora odabrati opcija "SES" u signatureLevel
     * "signatureLevel"\*
       + signatureLevel moguće vrijednosti: "QES" (kvalificirani poptis), "AES" (napredni potpis), "SES" (pečat). Odnosi se samo na ulogu Signer.
-    * ["SignatureImage" - slika potpisa s vrijednostima:](#pozicioniranje-slike-potpisa-pecata)
+    * ["signatureImage" - slika potpisa s vrijednostima:](#pozicioniranje-slike-potpisa-pecata)
       + "page"\* - stranica dokumenta na koju će slika potpisa biti pozicionirana
       + "widgetOffsetX"\* - pomak od donjeg lijevog kuta po x osi
       + "widgetOffsetY"\* - pomak od donjeg lijevog kuta po y osi
       + "widgetWidth"\* - širina widgeta za slike (ako dokument ima definirano polje za potpis ova vrijednost je ignorirana)
       + "widgetHeight"\* - visina widgeta za slike (ako dokument ima definirano polje za potpis ova vrijednost je ignorirana)
-  * Attachments[file\*, fileType, fileName\*] - lista priloga uz dokument za ovjeru. (*opcionalni parametar - ako se koristi ovaj parametar, obavezno popuniti atribute s oznakom “*”)
+  * attachments[file\*, fileType, fileName\*] - lista priloga uz dokument za ovjeru. (*opcionalni parametar - ako se koristi ovaj parametar, obavezno popuniti atribute s oznakom “*”)
     + "file" - prilog u obliku base64
     + "fileType" - tip dokumenta
     + "fileName" - ime priloga
-  * DocumentAttributes[attributeKey\*, attributeValue\*] - lista atributa (iste je potrebno dogovoriti prije implementacije) koji će se slati uz dokument za ovjeru. (*opcionalni parametar - ako se koristi ovaj parametar, obavezno popuniti niže navedene atribute*)
+  * attributes[attributeKey\*, attributeValue\*] - lista atributa (iste je potrebno dogovoriti prije implementacije) koji će se slati uz dokument za ovjeru. (*opcionalni parametar - ako se koristi ovaj parametar, obavezno popuniti niže navedene atribute*)
     + "attributeKey"
-    +"attributeValue"
+    + "attributeValue"
+  * deliveryAddresses[list<string>] - lista email adresa korisnika koji ne sudjeluju u ovjeri dokumenta, a kojima potrebno je dostaviti potpisani dokument po završetku potpisivanja
 
 * izlazni rezultat:
   * "documentId"\* - ID dokumenta u Signator sustavu za kasniji mogući dohvat statusa i obilježja dokumenta
-  * "documentURL" - poveznica za otvaranje dokumenta u edit modu u Signatoru kako bi inicijator mogao  definirati sve parametre procesa ovjere (potpisnike, tipove potpisa, poziciju potpisa)
+  * "documentUrl" - poveznica za otvaranje dokumenta u edit modu u Signatoru kako bi inicijator mogao  definirati sve parametre procesa ovjere (potpisnike, tipove potpisa, poziciju potpisa)
+  * "documentSignUrl" - poveznica za otvaranje dokumenta u potpisnom modu u Signatoru kako bi korisnik mogao odmah potpisati dokument
 
 ### **Opcionalne funkcije**
 
