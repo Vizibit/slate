@@ -1,0 +1,151 @@
+# **API interface for Signator Identity provider integration**
+
+![Logo](https://demo.signator.eu/assets/img/default/logo.svg)
+
+**Intro**
+
+This document describes possible ways to integrate the Signator IdP system and SystemX (generic system).
+Signator Idp provides identity and access management (Identity and Access Management - IAM), it also supports the standard authentication protocols like OpenID Connect, OAuth 2.0 i SAML.
+
+## 3rd Party integration
+
+> The following examples will use OpenID Connect protocol for external system (SystemX) authentication to the Signator IdP.
+> Before using the two callbacks that are described below, a remote system (SystemX) needs to send the integration information to Vizibit.
+
+The integration information needed:
+- {{SYSTEM_X_USER_CALLBACK_WEBSERVICE_URL}} - This is the URL that we will notify (push the created/updated user data) in case the user is created (HTTP POST) or updated (HTTP PUT)
+- **HttpAuthorizationHeader** - The caller can define the 'Authorization' header, the header will be used to authenticate to the service. If you leave this empty no authorization header will be sent.
+- Response code: The SystemX needs to respond with **HTTP 204** (No content), in case if the service responds with anything else the Vizibit system will retry until it gets the correct response.
+
+#### Callback: Notify remote system of new user creation (Signator IdP → System X)
+>This callback is triggered on user creation.
+Vizibit will send the newly created user to all 3rd party systems that were integrated using the procedure described in the "3rd Party integration".
+
+Vizibit will call the provided {{SYSTEM_X_USER_CALLBACK_WEBSERVICE_URL}} using **HTTP POST** and the payload that can be seen below.
+>The service needs to respond with HTTP 204, as described in "3rd Party integration"
+
+```http
+POST {{SYSTEM_X_USER_CALLBACK_WEBSERVICE_URL}} HTTP/1.1
+Content-Type: application/json
+Authorization: {{SystemX Bearer}}
+
+{
+   "id":"508a4914-8a21-409b-9748-d3cd254598e6",
+   "firstName":"Test",
+   "lastName":"Test",
+   "email":"test3@test.ts",
+   "mobilePhone":"+38593123456",
+   "attributes":{
+      "CompanyOib": "55545787881",
+      "CompanyName": "Test organization",
+      "CompanyRole": "Director",
+      "ContactPerson": "contact.person@person.os"
+   }
+}
+
+```
+
+#### Callback: Notify remote system of user update (Signator IdP → System X)
+>This callback is triggered on user update.
+Vizibit will send the newly updated user to all 3rd party systems that were integrated using the procedure described in the "3rd Party integration".
+
+Vizibit will call the provided {{SYSTEM_X_USER_CALLBACK_WEBSERVICE_URL}} using **HTTP PUT** and the payload that can be seen below.
+>The service needs to respond with HTTP 204, as described in "3rd Party integration"
+
+```http
+PUT {{SYSTEM_X_USER_CALLBACK_WEBSERVICE_URL}} HTTP/1.1
+Content-Type: application/json
+Authorization: {{SystemX Bearer}}
+
+{
+   "id":"508a4914-8a21-409b-9748-d3cd254598e6",
+   "firstName":"Test",
+   "lastName":"Test",
+   "email":"test3@test.ts",
+   "mobilePhone":"+38593123456",
+   "attributes":{
+      "CompanyOib": "55545787881",
+      "CompanyName": "Test organization",
+      "CompanyRole": "Director",
+      "ContactPerson": "contact.person@person.os"
+   }
+}
+
+```
+
+#### Function: Get all users (Sustav X → Signator IdP)
+
+Get all registered users
+
+`GET {{GATEWAYHOST}}/v/1/management/user`
+
+> If successful the above command returns code **200 OK** and JSON body structured like this:
+
+```json
+{
+   "data":[
+      {
+         "id":"508a4914-8a21-409b-9748-d3cd254598e6",
+         "firstName":"Test",
+         "lastName":"Test",
+         "email":"test2@test.ts",
+         "mobilePhone":"+38593123456",
+         "attributes":{
+            "CompanyOib": "55545787881",
+            "CompanyName": "Test organization",
+            "CompanyRole": "Director",
+            "ContactPerson": "contact.person@person.os"
+         }
+      },
+      {
+         "id":"0b7c63c9-1d52-45ed-82a6-c07af3066ffc",
+         "firstName":"Test",
+         "lastName":"Test",
+         "email":"test@test.ts",
+         "mobilePhone":"+38593123456",
+         "attributes":{
+            "CompanyOib": "55545787881",
+            "CompanyName": "Test organization",
+            "CompanyRole": "Director",
+            "ContactPerson": "contact.person@person.os"
+         }
+      }
+   ],
+   "total":2,
+   "aggregateResults":null,
+   "errors":null
+}
+```
+
+#### Funkcija: Get user by Signator IdP id (Sustav X → Signator IdP)
+
+Get a registered user by it's Signator IdP user id (GUID)
+
+`GET {{GATEWAYHOST}}/v/1/management/user/{{USER_GUID}}`
+
+> If successful the above command returns code **200 OK** and JSON body structured like this:
+
+```json
+{
+   "id":"508a4914-8a21-409b-9748-d3cd254598e6",
+   "firstName":"Test",
+   "lastName":"Test",
+   "email":"test2@test.ts",
+   "mobilePhone":"+38593123456",
+   "attributes":{
+      "CompanyOib": "55545787881",
+      "CompanyName": "Test organization",
+      "CompanyRole": "Director",
+      "ContactPerson": "contact.person@person.os"
+   }
+}
+
+```
+
+##Error codes
+
+All errors return the HTTP status code 400, unless an unforeseen situation has occurred. In that case HTTP status code is 500.
+
+All errors are returned as **JSON**.
+
+In case of an error, the processing is interrupted and the error response is returned to the caller.
