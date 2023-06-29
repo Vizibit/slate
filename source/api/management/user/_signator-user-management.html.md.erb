@@ -5,6 +5,7 @@
 **Intro**
 
 This document describes possible ways to integrate the Signator IdP system and SystemX (generic system).
+
 Signator Idp provides identity and access management (Identity and Access Management - IAM), it also supports the standard authentication protocols like OpenID Connect, OAuth 2.0 i SAML.
 
 ## 3rd Party integration
@@ -13,6 +14,7 @@ Signator Idp provides identity and access management (Identity and Access Manage
 > Before using the two callbacks that are described below, a remote system (SystemX) needs to send the integration information to Vizibit.
 
 The integration information needed:
+
 - {{SYSTEM_X_USER_CALLBACK_WEBSERVICE_URL}} - This is the URL that we will notify (push the created/updated user data) in case the user is created (HTTP POST) or updated (HTTP PUT)
 - **HttpAuthorizationHeader** - The caller can define the 'Authorization' header, the header will be used to authenticate to the service. If you leave this empty no authorization header will be sent.
 - Response code: The SystemX needs to respond with **HTTP 204** (No content), in case if the service responds with anything else the Vizibit system will retry until it gets the correct response.
