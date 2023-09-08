@@ -42,6 +42,17 @@ After everything is prepared your backend sends a **HTTP POST** request to "**Si
   "ExpiresAt": "{{Unix UTC timestamp for expiry}}"
   "HttpAuthorizationHeader": "{{HTTP authorization header value}}"
   "HttpMethod": "{{POST or PUT, POST is the default value}}"
+  "SignatureImage": {
+      "Page": 0,
+      "WidgetOffsetX": 200,
+      "WidgetOffsetY": 350,
+      "WidgetHeight": 75,
+      "WidgetWidth": 150,
+      "ImageData":"Signature image base64 string",
+      "LineOne": "Line 1",
+      "LineTwo": "Line 2",
+      "Appearance": "CARD"
+  }
 }
 ```
 The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "**OnErrorCallback**".
@@ -52,9 +63,10 @@ The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "
 - **HttpAuthorizationHeader** - The caller can define the 'Authorization' header, the header will be used to authenticate to the service. If you leave this empty no authorization header will be sent. **This is an optional field**.
 - **HttpMethod** - The caller can define if they want to use the HTTP POST or HTTP PUT method. If you leave this empty HTTP POST will be used. **This is an optional field**.
 
-Additionally the API exposes an additional optional field: "**ExpiresAt**".
+Additionally the API exposes an additional optional fields.
 
 - **ExpiresAt**  - ExpiresAt determines until when the document is available for signature, default value is 2 days from submission. **After the period expires and the document is not signed the document is automatically deleted from the API**
+- **SignatureImage** - You can optionally send the signature image definition in your workflow request. This signature image will only be used if you supply the **workflow_id** in the query parameter of the esign-lite frontend call.
 
 ###StorageId and SignatureToken
 > If successful the above command returns JSON structured like this (content-type: application/json):
@@ -72,7 +84,36 @@ Additionally the API exposes an additional optional field: "**ExpiresAt**".
 Your application only needs to communicate the described fields to the "eSign-Lite JS SDK" constructor.
 
 The **WorkflowId** is returned on all requests so we can know exactly the workflow in question in case we need to do additional debugging.
+**WorkflowId** is also used to exchange the predefined signature image and the esign-lite frontend.
 
+###Predefined signature image and esign-lite frontend
+The predefined signature image in the **SignatureImage** field of the `POST {{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple` will not be used if you don't supply the
+**workflow_id** query parameter in the esign-lite frontend call.
+
+**Positioning of the signature image**
+
+The image below explains how the signature image/seal positioning option.
+
+When sending parameters to determine the position of the signature image, it is needed to convert your current viewport to a PDF viewport.
+
+An example of a PDF document in figure below is shown in a coordinate system in dimensions of 612x792 units (A4 document). One unit in the PDF coordinate system is 1/72 of an inch.
+
+The parameters to be sent are:
+
+* **WidgetOffsetX** (label in the image **LLX**)
+* **WidgetOffsetY** (label in the image **LLY**) as coordinates of the lower left corner of the widget
+* **WidgetHeight** (label in the image **HEIGHT**)
+* **WidgetWidth** (label in the image **WIDTH**) as information about widget height and width in the coordinate system of the PDF document
+
+![Signature positioning image 1](https://mobile.signator.hr/img/slika_10_api_doc.png)
+
+
+> Example of the constructed esign-lite frontend url with the **workflow_id** parameter:
+
+```
+GET {{GATEWAYHOST}}?workflow_id={{WorkflowId}}&storage_id={{StorageId}}&signature_token={{SignatureToken}}
+
+```
 
 ###Callbacks
 > Callback response "OnSignedCallback"
