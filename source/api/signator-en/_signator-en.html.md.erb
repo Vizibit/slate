@@ -4,13 +4,13 @@
 
 **GENERAL**
 
-This document describes possible ways to integrate the Signator system and SystemX (generic system). Signator provides centralised signing of documents with digital certificates, seals or time stamps.
+This document outlines available methods for integrating the Signator system and SystemX (a generic system). Signator offers centralized document signing using digital certificates, seals, or timestamps.
 
 ## Signator introduction
 
-> Following examples will use **authorization as query parameter**.
+> The following examples will utilize **authorization token as a query parameter**.
 
-In order to use requests from this documentation, it is necessary to configure an environment defined with parameters such as gateway host and authorization key.
+To utilize the requests provided in this documentation, it is essential to set up an environment defined with parameters such as gateway host and authorization key.
 
 Here's an example of API structure for an endpoint:
 
@@ -18,7 +18,9 @@ Here's an example of API structure for an endpoint:
 
 `GET {{GATEWAYHOST}}/v/1/integrator/pdf/signature/certificates/`
 
-In order to test requests in a test environment, you can find demonstrational gateway host in the table below. The required authorization key must be requested from Vizibit company. Once given, the authorization key should be written in a header with or without **Bearer** key word or as a **query** parameter (authorization_key) in the testing request.
+To test requests in a test environment, the demonstrational gateway host can be found in the table below.
+The necessary authorization key must be obtained from Vizibit.
+Once acquired, the authorization key should be included either as a bearer token (in 'Authorization' header) or as a query parameter ('authorization_key') within the testing request.
 
 #### Query Parameters
 
@@ -35,22 +37,21 @@ Parameter sent in request need to be inserted instead of parameter's name in cur
 
 Authorization to the Signator interface is performed using a JWT token.
 
-The contractor must request a JWT token from Vizibit (different tokens will be used for the test and production environment, as well as for communication to different systems).
+The contractor must request a JWT token from Vizibit (different tokens will be used for testing and production environments, as well as for communication to different systems).
 
 **The token contains:**
 
 - duration of the access
 - identifier of the service accessing the interface
 
-**JWT token is sent to the interface in one of the following ways:**
+**The JWT token is included in the request sent to the interface in one of the following ways:**
 
 - in the query parameter **authorization\_key**
-- in the request header as **Authorization** parameter
-- in the request header as **Bearer Token**
+- in the request **Authorization** header as a **Bearer Token**
 
 ### Authorization to the System X interface
 
-The contractor must select one of the offered authorization models :
+The contractor should support one of the following authorization models for authorizing Signator request:
 
 - Basic authentication
 - JWT tokens
@@ -59,7 +60,7 @@ The contractor must select one of the offered authorization models :
 
 Usual steps for digital signing of a document includes several phases:
 
-- **Phase 1:** Creating a document Approval and signing workflow
+- **Phase 1:** Creating a document for approval/signing and signing workflow
   - importing an pdf document to be digitally signed
   - document certificate verification (optional)
   - digital signing with electronic seal (optional)
@@ -69,7 +70,7 @@ Usual steps for digital signing of a document includes several phases:
   - adding attributes to the pdf document to be verified
   - starting the approval and signing proces
 - **Phase 2** : Document signing
-  - all defined participants electronically sign the document
+  - all defined participants have digitally signed the document
 
 Aforementioned steps of **Phase 1** can be performed through three options:
 
