@@ -16,7 +16,7 @@ Here's an example of API structure for an endpoint:
 
 #### HTTP Request
 
-`GET {{GATEWAYHOST}}/v/1/integrator/pdf/signature/certificates/`
+`GET {{GATEWAY-HOST}}/v/1/integrator/pdf/signature/certificates/`
 
 To test requests in a test environment, the demonstrational gateway host can be found in the table below.
 The necessary authorization key must be obtained from Vizibit.
@@ -26,7 +26,7 @@ Once acquired, the authorization key should be included either as a bearer token
 
 Parameter | Value
 --------- | -----------
-**GATEWAYHOST** | https://demo.signator.eu
+**GATEWAY-HOST** | https://demo.signator.eu
 **authorization_key** | Your authorization key. Add in a header of request or as **query** parameter.
 
 Parameter sent in request need to be inserted instead of parameter's name in curly brackets (e.g. "/v/1/document/**{{document_id}}**/attributes/").
@@ -49,7 +49,7 @@ The contractor must request a JWT token from Vizibit (different tokens will be u
 - in the query parameter **authorization\_key**
 - in the request **Authorization** header as a **Bearer Token**
 
-### Authorization to the System X interface
+### Authorization to the SystemX interface
 
 The contractor should support one of the following authorization models for authorizing Signator request:
 
@@ -68,7 +68,7 @@ Usual steps for digital signing of a document includes several phases:
   - defining the position of the visual part of the digital signature
   - adding attachments
   - adding attributes to the pdf document to be verified
-  - starting the approval and signing proces
+  - starting the approval and signing process
 - **Phase 2** : Document signing
   - all defined participants have digitally signed the document
 
@@ -118,7 +118,7 @@ The advantages of this integration model are:
 
 ```json
 {
-  "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "file": "JVBRi0xLjUKJ … shortened for readability … 3MAolUVPRgo=",
   "fileType": "pdf",
   "fileName": "Document name",
   "initiator": "example.address@domain.com",
@@ -138,7 +138,7 @@ The advantages of this integration model are:
   ],
   "attachments": [
     {
-      "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+      "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolUVPRgo=",
       "fileType": "xml",
       "fileName": "Attachment-12"
     }
@@ -184,7 +184,7 @@ The advantages of this integration model are:
 
 - SystemX sends a document to be digitally signed by one or more persons to Signator system
 
-`POST {{GATEWAYHOST}}/v/1/document/{{calling_system}}`
+`POST {{GATEWAY-HOST}}/v/1/document/{{calling_system}}`
 
 **Route Values**
 
@@ -227,13 +227,13 @@ calling_system |  | identifier for the calling system
 
 ### **Optional functions**
 
-#### Function: **ShareFileToRecepient**
+#### Function: **ShareFileToRecipient**
 
 > JSON Body input:
 
 ```json
 {
-  "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo=",
   "fileType": "pdf",
   "fileName": "Document name",
   "initiator": "example.address@domain.com",
@@ -245,7 +245,7 @@ calling_system |  | identifier for the calling system
   ],
   "attachments": [
     {
-      "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+      "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo=",
       "fileType": "xml",
       "fileName": "Attachment-12"
     }
@@ -282,9 +282,9 @@ Document can be delivered to the user of Signator application for inspection in 
 - send e-mail with a link to the document on the Signator portal
 - send e-mail with the document as an attachment
 
-`POST {{GATEWAYHOST}}/v/1/document/delivery/`
+`POST {{GATEWAY-HOST}}/v/1/document/delivery/`
 
-  - function name: ShareFileToRecepient
+  - function name: ShareFileToRecipient
   - implemented in: Signator
   - caller: SystemX
   - input parameters:
@@ -332,7 +332,7 @@ Document can be delivered to the user of Signator application for inspection in 
 
 - Get all document attributes by documentID
 
-`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/attributes/`
+`GET {{GATEWAY-HOST}}/v/1/document/{{document_id}}/attributes/`
 
 **Route Values**
 
@@ -365,7 +365,7 @@ document_id |  | Id of the document.
 [
   {
     "documentId": 123,
-    "worfklowStatus": "PENDING"
+    "workflowStatus": "PENDING"
   }
 ]
 ```
@@ -389,7 +389,7 @@ document_id |  | Id of the document.
 
 - Retrieve document statuses by documentID
 
-`POST {{GATEWAYHOST}}/v/1/document/status/`
+`POST {{GATEWAY-HOST}}/v/1/document/status/`
 
   - function name: **GetDocumentStatus**
   - implemented in: Signator
@@ -415,7 +415,7 @@ document_id |  | Id of the document.
 ```json
 {
   "documentId": 123,
-  "signedFile": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
+  "signedFile": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo="
 }
 ```
 
@@ -437,7 +437,7 @@ document_id |  | Id of the document.
 
 - Get the signed document
 
-`GET {{GATEWAYHOST}}/v/1/document/{{document_id}}/`
+`GET {{GATEWAY-HOST}}/v/1/document/{{document_id}}/`
 
 **Route Values**
 
@@ -447,7 +447,7 @@ document_id |  | Id of the document.
 
   - function name: **GetApprovedDocument**
   - implemented in: Signator
-  - caller: SustavX
+  - caller: SystemX
   - input parameters:
     - &quot;documentId&quot;\* - ID of the signed document that needs to be retrieved
   - output:
@@ -458,7 +458,7 @@ document_id |  | Id of the document.
 #### Function: **UpdateDocumentAttributes**
 
 
-`PUT {{GATEWAYHOST}}/v/1/document/{{document_id}}/attributes/`
+`PUT {{GATEWAY-HOST}}/v/1/document/{{document_id}}/attributes/`
 
 > JSON Body input:
 
@@ -515,13 +515,13 @@ document_id |  | Id of the document.
 
 #### Function: **VerifyDocumentCertificates**
 
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/signature/certificates/`
+`POST {{GATEWAY-HOST}}/v/1/integrator/pdf/signature/certificates/`
 
 > JSON Body input:
 
 ```json
 {
-  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo="
+  "File": "JVBEi0xLjUKJ … shortened … 3MAolJUVPgo="
 }
 ```
 
@@ -537,7 +537,7 @@ document_id |  | Id of the document.
       "Time": "2021-01-01T23:59:59",
       "Qualified": "Granted",
       "ChainValidationStatus": "Valid",
-      "Subject": "/C=HR/O=TEST/OU=Signature/S=FIRSTNAME/G=LASTNAME/SN=PNOHR-00000000001/CN=FIRSTNAME LASTNAME",
+      "Subject": "/C=HR/O=TEST/OU=Signature/S=FIRSTNAME/G=LASTNAME/SN=PH-00000000001/CN=FIRSTNAME LASTNAME",
       "Status": "Valid",
       "Type": "Standard"
     }
@@ -589,7 +589,7 @@ document_id |  | Id of the document.
 
 #### Function: **FinishApprovalProcess**
 
-`POST {{GATEWAYHOST}}/v/1/document/`
+`POST {{GATEWAY-HOST}}/v/1/document/`
 
 > JSON Body input:
 
@@ -597,7 +597,7 @@ document_id |  | Id of the document.
 {
   "documentId": 123,
   "documentUrl": "esign.example.com/#/v/1/document/3",
-  "signedFile": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "signedFile": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo=",
   "fileName": "Document name",
   "status": "FINISHED",
   "attributes": [
@@ -652,7 +652,7 @@ After the document is digitally signed, Signator calls the function on the Syste
 
 #### Function: **GetDocumentAttributes**
 
-`POST {{GATEWAYHOST}}/v/1/document/attributes/`
+`POST {{GATEWAY-HOST}}/v/1/document/attributes/`
 
 > JSON Body input:
 
@@ -743,9 +743,9 @@ There are three options to seal a document:
 
 ```json
 {
-  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "File": "JVBEi0xLjUKJ … shortened … 3MAolJUVPgo=",
   "RecordNumber": "123/ab/731",
-  "SystemId": "ePotpis",
+  "SystemId": "eSign",
   "SignatureOptions": {
     "Reason": "New contract",
     "Location": "Zurich",
@@ -759,8 +759,8 @@ There are three options to seal a document:
 
 ```json
 {
-  "SignedFile": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
-  "StorageProviderDocumentId": "C211D9D33ECBAC28F54CC",
+  "SignedFile": "JVBEi0xLjUKJ … shortened … 3MAolJUVPgo=",
+  "StorageProviderDocumentId": "C211D9D33ECB28F54CC",
   "RecordNumber": "123/ab/731"
 }
 ```
@@ -781,7 +781,7 @@ There are three options to seal a document:
 }
 ```
 
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/electronic_deed/fixed/`
+`POST {{GATEWAY-HOST}}/v/1/integrator/pdf/seal/electronic_deed/fixed/`
 
 Sealing a document with a fixed layout and the position of the seal itself.
 
@@ -826,7 +826,7 @@ Seal a document with arbitrary text in the visual part of the seal and arbitrary
 
 ```json
 {
-  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "File": "JVBEi0xLjUKJ … shortened … 3MAolJUVPgo=",
   "SignatureText": {
     "Text": "Example text",
     "Page": 1,
@@ -862,7 +862,7 @@ Seal a document with arbitrary text in the visual part of the seal and arbitrary
 }
 ```
 
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/positioned/`
+`POST {{GATEWAY-HOST}}/v/1/integrator/pdf/seal/text/positioned/`
 
 - function name: **SealDocumentWithPositionedText**
 - implemented in: Signator
@@ -894,7 +894,7 @@ Sealing document with some text with fixed position.
 
 ```json
 {
-  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "File": "JVBEi0xLjUKJ … shortened … 3MAolJUVPgo=",
   "Text": "Sample text"
 }
 ```
@@ -917,7 +917,7 @@ Sealing document with some text with fixed position.
 }
 ```
 
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/text/fixed/`
+`POST {{GATEWAY-HOST}}/v/1/integrator/pdf/seal/text/fixed/`
 
 - function name: **SealDocumentWithFixedText**
 - implemented in: Signator
@@ -925,11 +925,11 @@ Sealing document with some text with fixed position.
 - input parameters:
   - &quot;File&quot;\* - document to be sealed
   - &quot;Text&quot;\* - text to be added to the visual part of the seal
-  - &quot;ExternalSignerRegistryId&quot; - Optional parameter, this parameter enables switching between multiple different signing certificates when performing the eseal call
+  - &quot;ExternalSignerRegistryId&quot; - Optional parameter, this parameter enables switching between multiple different signing certificates when performing the e-Seal call
 - output:
   - binary response with &quot;application/pdf&quot; content type
 
-Example of the seal image layout with **arbitrary text** which is added to the visual part of the seal(_KLASA: XXX-XX / XX-XX / XXXX, UBROJ: YYYYY-YYYYYY-YY-YY, Datum: DD.MM.YYYY._&quot; in the example figure) and a fixed position:
+Example of the seal image layout with **arbitrary text** which is added to the visual part of the seal(_DOCUMENT CLASS: XXX-XX / XX-XX / XX-XX, DOCUMENT DOCKET NUMBER: YY/YYY-YYY-YYY/YY, Date: DD.MM.YYYY._&quot; in the example figure) and a fixed position:
 
 ![Sealed document](https://assets.signator.eu/share/img/slika_8_api_doc.png)
 
@@ -941,14 +941,14 @@ Example of the seal image layout with **arbitrary text** which is added to the v
 
 ```json
 {
-  "File": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo=",
+  "File": "JVBEi0xLjUKJ … shortened … 3MAolJUVPgo=",
   "SignatureImage": {
     "Page": 1,
     "WidgetOffsetX": 100,
     "WidgetOffsetY": 200,
     "WidgetWidth": 300,
     "WidgetHeight": 150,
-    "ImageData": "JVBERi0xLjUKJ … shortened … 3MAolJUVPRgo="
+    "ImageData": "JVBEi0xLjUKJ … shortened … 3MAolJUVPgo="
   },
   "SignatureOptions": {
     "Reason": "New contract",
@@ -979,11 +979,11 @@ Example of the seal image layout with **arbitrary text** which is added to the v
 
 Sealing a document with image and seal position.
 
-`POST {{GATEWAYHOST}}/v/1/integrator/pdf/seal/image/positioned/`
+`POST {{GATEWAY-HOST}}/v/1/integrator/pdf/seal/image/positioned/`
 
 - function name: **SealDocumentWithPositionedImage**
 - implemented in: Signator
-- caller: System X
+- caller: SystemX
 - input parameters:
   - &quot;File&quot;\* - a document to be sealed
   - [&quot;SignatureImage&quot; \* - image that is added to the visual part of the seal](#positioning-of-the-signature-image-seal)
@@ -994,23 +994,23 @@ Sealing a document with image and seal position.
       - &quot;WidgetWidth&quot; - height of the seal image
       - &quot;WidgetHeight&quot; - width of the seal image
   - &quot;SignatureOptions&quot;\*
-      - &quot;Reason&quot; - razlog potpisa
-      - &quot;Location&quot; - lokacija na kojoj je nastao potpis
-      - &quot;SignerContactInfo&quot; - informacije o potpisniku
-      - &quot;SignerName&quot; - ime potpisnika
-  - &quot;ExternalSignerRegistryId&quot; - Optional parameter, this parameter enables switching between multiple different signing certificates when performing the eseal call
+      - &quot;Reason&quot; - signature reason
+      - &quot;Location&quot; - location of the digital signature
+      - &quot;SignerContactInfo&quot; - additional signer information
+      - &quot;SignerName&quot; - signer name
+  - &quot;ExternalSignerRegistryId&quot; - Optional parameter, this parameter enables switching between multiple different signing certificates when performing the e-Seal call
 - output:
   - binary response with &quot;application/pdf&quot; content type
 
 #### Function: **StoreDocument**
 
-`{{GATEWAYHOST}}/v/1/integrator/store_document/`
+`{{GATEWAY-HOST}}/v/1/integrator/store_document/`
 
 > JSON Body input:
 
 ```json
 {
-  "SignedFile": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
+  "SignedFile": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo="
 }
 ```
 
@@ -1059,7 +1059,7 @@ External users have the ability to authenticate a document by scanning a QR code
 
 #### Function: **VerifyDocumentAuthenticity**
 
-`POST {{GATEWAYHOST}}/v/1/integrator/verify_document_authenticity/`
+`POST {{GATEWAY-HOST}}/v/1/integrator/verify_document_authenticity/`
 
 > JSON Body input:
 
@@ -1073,7 +1073,7 @@ External users have the ability to authenticate a document by scanning a QR code
 
 ```json
 {
-  "AutenthicityDocument": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo="
+  "AuthenticityDocument": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo="
 }
 ```
 
@@ -1107,7 +1107,7 @@ The function provides a call from an external user who wants to verify a documen
 
 It is up to SystemX to implement either the first or second option based on the client&#39;s decision. Signator always receives a document which it displays on the verification website.
 
-Example of a QR code drawn on visual part of the seal is shown below. By scanning it, user will be redirected to the [verification page](#function-verifydocumentauthenticity)
+Example of a QR code drawn on visual part of the seal is shown below. By scanning it, user will be redirected to the [verification page](#function-verifyDocumentAuthenticity)
 with &quot;Record number&quot; and &quot;Control number&quot; fields being automatically filled. In case user is accessing verification page without scanning QR code (by entering page URL), &quot;Record number&quot; and &quot;Control number&quot; fields have to be filled manually.
 
 
@@ -1156,7 +1156,7 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
 {
   "documentId": 123,
   "documentUrl": "esign.example.com/#/v/1/document/3",
-  "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+  "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo=",
   "fileType": "pdf",
   "fileName": "file name",
   "submittedFormIdentifier": "13",
@@ -1167,7 +1167,7 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
   },
   "attachments": [
     {
-      "file": "JVBERi0xLjUKJ … shortened for readability … 3MAolJUVPRgo=",
+      "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo=",
       "fileType": "xml",
       "fileName": "Attachment-12"
     }
@@ -1201,7 +1201,7 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
 
 - After user filled the form Signator sends it in PDF format, together with filled fields in JSON format, to SystemX
 
-`POST {{GATEWAYHOST}}/v/1/integrator/submitted_form/`
+`POST {{GATEWAY-HOST}}/v/1/integrator/submitted_form/`
 
   - function name: **StoreSubmittedForm**
   - implemented in: SystemX
@@ -1224,11 +1224,11 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
 
 ### Model description from the SystemX perspective (SystemX → Signator)
 
-[Function: UpdateDocumentAttributes](#function-updatedocumentattributes)
+[Function: UpdateDocumentAttributes](#function-updateDocumentAttributes)
 
 ## Positioning of the signature image/seal
 
-The image below explains how the signature image/seal positioning option, used in the functions [StartApprovalProcess](#function-startapprovalprocess) and [SealDocumentWithPositionedText](#option-2-e-seal-with-arbitrary-text-and-position).
+The image below explains how the signature image/seal positioning option, used in the functions [StartApprovalProcess](#function-startApprovalProcess) and [SealDocumentWithPositionedText](#option-2-e-seal-with-arbitrary-text-and-position).
 
 When sending parameters to determine the position of the signature image or seal, it is needed to convert your current viewport to a PDF viewport.
 
