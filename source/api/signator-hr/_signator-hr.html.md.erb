@@ -474,10 +474,6 @@ Funkcija provjerava jesu li svi digitalni potpisi valjani i kvalificirani.
 * Sučelja koriste REST za pozive na Signator API
 * Sva razmjena podataka obavlja se koristeći **HTTP** u **JSON** formatu.
 
-### **Opis modela iz perspektive Signatora (Signator → Sustav X)**
-
-Prijedlog implementacije sučelja za integraciju na strani Sistem Integratora nalazi se [ovdje](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSignature%20Integration).
-
 #### Funkcija: FinishApprovalProcess
 
 Nakon što je dokument ovjeren, Signator poziva funkciju na strani Sustava X kako bi mu predao ovjereni dokument.
@@ -598,8 +594,6 @@ Detaljniji opis greške nalazit će se u info elementu.
 Dokument se može ovjeriti s certifikatom izdanim na tvrtku koristeći HSM uređaj. Postoji nekoliko modela ovjere s obzirom na vizualizaciju pečata koji su navedeni u narednim poglavljima.
 
 ### Opis modela iz perspektive Sustava X (Sustav X → Signator)
-
-Definicija Signator sučelja za e-Pečat nalazi se [ovdje](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration).
 
 Postoje četiri opcije pečatiranja dokumenta:
 * **Opcija 1**: pečatiranje dokumenta s fiksiranim izgledom i pozicijom samog pečata
@@ -800,10 +794,6 @@ Pečatiranje dokumenta s proizvoljnom slikom i pozicijom pečata.
     * “Location” - lokacija na kojoj je nastao potpis
     * “SignerContactInfo” - informacije o potpisniku
     * “SignerName” - ime potpisnika
-
-### **Opis modela iz perspektive Signatora (Signator -> Sustav X)**
-
-Prijedlog implementacije sučelja za integraciju na strani Sistem Integratora nalazi se [ovdje](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSeal%20Integration).
 
 #### Funkcija: StoreDocument
 

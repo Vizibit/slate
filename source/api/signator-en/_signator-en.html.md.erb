@@ -111,10 +111,6 @@ The advantages of this integration model are:
 
 ![Representation of the integration model for e-Signature](https://assets.signator.eu/share/img/slika_3_api_doc.png)
 
-### Model description from the SystemX perspective (SystemX → Signator)
-
-Definition of the Signator interface for the e-Signature can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration).
-
 #### Function: StartApprovalProcess
 
 > JSON Body input:
@@ -198,10 +194,9 @@ calling_system |  | identifier for the calling system
   - function name: **StartApprovalProcess**
   - implemented in: Signator
   - caller: SystemX
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration/StartApprovalProcess)
   - input parameters:
     - &quot;file&quot;\* - pdf document in base64 format
-    - &quot;fileType&quot; - file type
+    - &quot;fileType&quot;\* - file type
     - &quot;fileName&quot;\* - name of the pdf document to digitally sign
     - &quot;initiator&quot;\* - email of the person who sent the document from SystemX for digital signing
     - &quot;participants&quot; - [email, role, signatureLevel, signatureImage] - list of signers defined in sequential order (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
@@ -225,7 +220,7 @@ calling_system |  | identifier for the calling system
       - &quot;attributeValue&quot;
     - deliveryAddresses[list<string>] - list of email addresses of users who do not participate in document verification, and to whom the signed document needs to be delivered upon completion of the signing
   - output:
-    - &quot;documentId&quot;\* - ID of the document in the Signator system for later possible retrieval of the status and attributes of the document
+    - &quot;documentId&quot; - ID of the document in the Signator system for later possible retrieval of the status and attributes of the document
     - &quot;documentUrl&quot; - link to open the document in edit mode in Signator so that the initiator can define all parameters of the signing workflow (signers, signature types, signature position)
     - &quot;documentSignUrl&quot; - link to open the document in signing mode in Signator so that the user can immediately start document signing
 
@@ -291,7 +286,6 @@ Document can be delivered to the user of Signator application for inspection in 
   - function name: ShareFileToRecepient
   - implemented in: Signator
   - caller: SystemX
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration/ShareFileToRecepient)
   - input parameters:
     - &quot;file&quot;\* - pdf document in base64 format
     - &quot;fileType&quot; - file type
@@ -348,7 +342,6 @@ document_id |  | Id of the document.
   - function name: **GetDocumentAttributes**
   - implemented in: Signator
   - caller: SystemX
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration/GetDocumentAttributes)
   - input parameters:
     - &quot;documentId&quot;\* - ID of the document for which all attributes need to be retrieved
   - output:
@@ -400,7 +393,6 @@ document_id |  | Id of the document.
   - function name: **GetDocumentStatus**
   - implemented in: Signator
   - caller: SystemX
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration/GetDocumentStatus)
   - input parameters:
     - DocumentIdentifier\* [documentId] - list of documentIds for which it is necessary to retrieve status
   - output:
@@ -455,7 +447,6 @@ document_id |  | Id of the document.
   - function name: **GetApprovedDocument**
   - implemented in: Signator
   - caller: SustavX
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration/GetApprovedDocument)
   - input parameters:
     - &quot;documentId&quot;\* - ID of the signed document that needs to be retrieved
   - output:
@@ -514,7 +505,6 @@ document_id |  | Id of the document.
   - function name: **UpdateDocumentAttributes**
   - implemented in: Signator
   - caller: SystemX
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSignature%20Integration/UpdateDocumentAttributes)
   - input parameters:
     - &quot;documentId&quot;\* - ID of the document to which you want to update the attributes
     - DocumentAttributes[attributeKey\*, attributeValue\*] - a list of attribute names and their values ​​defined in the Signator system.
@@ -576,7 +566,6 @@ document_id |  | Id of the document.
   - function name: **VerifyDocumentCertificates**
   - implemented in: Signator
   - caller: SystemX
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration/VerifyDocumentCertificates)
   - input parameters:
     - &quot;File&quot;\* - document
   - output:
@@ -596,9 +585,6 @@ document_id |  | Id of the document.
 
 1. Interfaces use REST for calls to the Signator API
 2. All data exchange is performed using **HTTP** in **JSON** format.
-
-### Model description from the Signator perspective (Signator → SystemX)
-Proposal for implementation of the integration interface on the system integrator side can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSignature%20Integration).
 
 #### Function: **FinishApprovalProcess**
 
@@ -650,7 +636,6 @@ After the document is digitally signed, Signator calls the function on the Syste
 - function name: **FinishApprovalProcess**
 - implemented in: SystemX
 - caller: Signator
-- [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSignature%20Integration/FinishApprovalProcess)
 - input parameters:
   - &quot;documentId&quot;\* - ID of the digitally signed document as a reference to SystemX which is the subject document
   - &quot;documentUrl&quot;\* - the path of the digitally signed document. digitally signed document can be opened from SystemX by opening the path of a specific document. The document can be seen by a person if he/she is a participant in the digital signing workflow or the document has been shared with him/her.
@@ -708,7 +693,6 @@ After the document is digitally signed, Signator calls the function on the Syste
   - function name: **GetDocumentAttributes**
   - implemented in:systemX:
   - caller: Signator
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSignature%20Integration/GetDocumentAttributes)
   - input parameters:
     - &quot;documentId&quot;\* - ID of the document for which all attributes need to be retrieved
   - output:
@@ -745,10 +729,6 @@ A more detailed description of the error will be found in the info element.
 ### Digital signing of document with e-Seal
 
 The document can be digitally signed with a certificate issued to the company using an HSM device. There are several digital signing models with respect to seal visualization that are listed in the following chapters.
-
-### Model description from the SystemX perspective (SystemX → Signator)
-
-Definition of the e-Stamp interface can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration).
 
 There are three options to seal a document:
 
@@ -810,7 +790,6 @@ This option is intended for sealing a document with predefined dimensions and th
 - function name: **SealDocumentWithFixedElectronicDeed**
 - implemented in: Signator
 - caller: SystemX
-- [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration/SealDocumentWithFixedElectronicDeed)
 - input parameters:
   - &quot;File&quot;\* - ID of the document in SystemX
   - &quot;RecordNumber\* - ID of the document in central document management system
@@ -888,7 +867,6 @@ Seal a document with arbitrary text in the visual part of the seal and arbitrary
 - function name: **SealDocumentWithPositionedText**
 - implemented in: Signator
 - caller: SystemX
-- [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration/SealDocumentWithPositionedText)
 - input parameters:
   - &quot;File&quot;\* - document to be sealed
   - [&quot;SignatureText&quot; \* - text to be added to the visual part of the seal](#positioning-of-the-signature-image-seal)
@@ -944,7 +922,6 @@ Sealing document with some text with fixed position.
 - function name: **SealDocumentWithFixedText**
 - implemented in: Signator
 - caller: SystemX
-- [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration/SealDocumentWithFixedText)
 - input parameters:
   - &quot;File&quot;\* - document to be sealed
   - &quot;Text&quot;\* - text to be added to the visual part of the seal
@@ -1007,7 +984,6 @@ Sealing a document with image and seal position.
 - function name: **SealDocumentWithPositionedImage**
 - implemented in: Signator
 - caller: System X
-- [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration/1#/eSeal%20Integration/SealDocumentWithPositionedImage)
 - input parameters:
   - &quot;File&quot;\* - a document to be sealed
   - [&quot;SignatureImage&quot; \* - image that is added to the visual part of the seal](#positioning-of-the-signature-image-seal)
@@ -1025,10 +1001,6 @@ Sealing a document with image and seal position.
   - &quot;ExternalSignerRegistryId&quot; - Optional parameter, this parameter enables switching between multiple different signing certificates when performing the eseal call
 - output:
   - binary response with &quot;application/pdf&quot; content type
-
-### Model description from the Signator perspective (Signator → SystemX)
-
-Proposal for implementation of the integration interface on the system integrator side can be found [here](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSeal%20Integration).
 
 #### Function: **StoreDocument**
 
@@ -1074,7 +1046,6 @@ Function ensures that the document is saved to the central document management s
 - function name: **StoreDocument**
 - implemented in: SystemX
 - caller: Signator
-- [definition call](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSeal%20Integration/StoreDocument)
 - input parameters:
   - &quot;SignedFile&quot;\* - signed document
 - output:
@@ -1127,7 +1098,6 @@ The function provides a call from an external user who wants to verify a documen
 - function name: **VerifyDocumentAuthenticity**
 - implemented in: SystemX
 - caller: Signator
-- [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eSeal%20Integration/VerifyDocumentAuthenticity)
 - input parameters:
   - &quot;StorageProviderDocumentId&quot;\* - ID of the document in central document management system
 - output:
@@ -1236,7 +1206,6 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
   - function name: **StoreSubmittedForm**
   - implemented in: SystemX
   - caller : Signator
-  - [call definition](https://app.swaggerhub.com/apis-docs/jmaric-vizibit/Signator-Integration-SystemX-Perspective/1.0#/eForms%20Integration/StoreSubmittedForm)
   - input parameters:
     - &quot;documentId&quot;\* - documentId of the filled form from Signator,
     - &quot;documentUrl&quot;\* - path of the filled form,
