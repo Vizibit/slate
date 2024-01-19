@@ -85,7 +85,7 @@ Steps are identical to those described in Phase 1 and are performed by the initi
 
 This option allows a simple level of integration by sending a document that needs to be signed from the SystemX to the Signator through a defined API. SystemX then opens the Signator application in a new browser tab (automatic SSO login) so that the person initiating the signing workflow could define the signers, signing sequence, signature types, and the locations of the visual parts of the signature.
 
-![Semi-automatic start of the digital signing workflow](https://mobile.signator.hr/img/slika_1_api_doc.png)
+![Semi-automatic start of the digital signing workflow](https://assets.signator.eu/share/img/slika_1_api_doc.png)
 
 The specificity of this option is that SystemX opens a new tab to access the Signator application and the specific document. The document is opened in the second step of the document signing wizard. The initiator (usually the clerk or secretary) is expected to manually add the document signers and manually position the signature images on the document itself. The initiator finally starts the signing workflow.
 
@@ -98,7 +98,7 @@ The advantages of this integration model are:
 
 This option allows full automation and integration by sending all required parameters from SystemX to start the digital signin workflow in Signator. This means that all signers, digital signing sequence, signature levels (QES, AES or SES) and the location of signatures on the document are defined.
 
-![Automatic start of the digital signing workflow](https://mobile.signator.hr/img/slika_2_api_doc.png)
+![Automatic start of the digital signing workflow](https://assets.signator.eu/share/img/slika_2_api_doc.png)
 
 Steps to verify the certificate on the document and to seal the document are optional.
 
@@ -109,7 +109,7 @@ The advantages of this integration model are:
 
 ### **Representation of the integration model for e-Signature**
 
-![Representation of the integration model for e-Signature](https://mobile.signator.hr/img/slika_3_api_doc.png)
+![Representation of the integration model for e-Signature](https://assets.signator.eu/share/img/slika_3_api_doc.png)
 
 ### Model description from the SystemX perspective (SystemX → Signator)
 
@@ -740,7 +740,7 @@ A more detailed description of the error will be found in the info element.
 
 ### Representation of the integration model for e-Seal
 
-![Representation of the integration model for e-Seal](https://mobile.signator.hr/img/slika_5_api_doc.png)
+![Representation of the integration model for e-Seal](https://assets.signator.eu/share/img/slika_5_api_doc.png)
 
 ### Digital signing of document with e-Seal
 
@@ -827,11 +827,11 @@ This option is intended for sealing a document with predefined dimensions and th
 
 Seal layout:
 
-![Seal layout](https://mobile.signator.hr/img/slika_6_api_doc.png)
+![Seal layout](https://assets.signator.eu/share/img/slika_6_api_doc.png)
 
 Location where the electronic seal is positioned (valid only for A4 paper dimensions):
 
-![Seal location](https://mobile.signator.hr/img/slika_7_api_doc.png)
+![Seal location](https://assets.signator.eu/share/img/slika_7_api_doc.png)
 
 - Electronic seal dimensions (valid only for A4 paper dimensions):
   - height : 45 mm
@@ -954,7 +954,7 @@ Sealing document with some text with fixed position.
 
 Example of the seal image layout with **arbitrary text** which is added to the visual part of the seal(_KLASA: XXX-XX / XX-XX / XXXX, UBROJ: YYYYY-YYYYYY-YY-YY, Datum: DD.MM.YYYY._&quot; in the example figure) and a fixed position:
 
-![Sealed document](https://mobile.signator.hr/img/slika_8_api_doc.png)
+![Sealed document](https://assets.signator.eu/share/img/slika_8_api_doc.png)
 
 #### Option 4: e-Seal with arbitrary image and position
 
@@ -1141,7 +1141,7 @@ Example of a QR code drawn on visual part of the seal is shown below. By scannin
 with &quot;Record number&quot; and &quot;Control number&quot; fields being automatically filled. In case user is accessing verification page without scanning QR code (by entering page URL), &quot;Record number&quot; and &quot;Control number&quot; fields have to be filled manually.
 
 
-![Verify document](https://mobile.signator.hr/img/slika_9_api_doc.png)
+![Verify document](https://assets.signator.eu/share/img/slika_9_api_doc.png)
 
 
 #### Error feedback
@@ -1174,7 +1174,7 @@ A more detailed description of the error will be found in the info element.
 Signator has the ability to host pdf dynamic forms within its interface in a web browser. End user can select one from the list of published forms, fill it in and submit it. The submitted form is sent to the Signator backend in the form of a filled PDF document, which can also be digitally signed with a digital signature, with a list of all entered values ​​as JSON or XML structured data. It is also possible to send a completed and digitally signed PDF document to SystemX. The definition of the model can be found in the following diagram.
 
 ### **Representation of the integration model**
-![Integration model](https://mobile.signator.hr/img/slika_5_api_doc.png)
+![Integration model](https://assets.signator.eu/share/img/slika_5_api_doc.png)
 
 ### Model description from the Signator perspective (Signator → SystemX)
 
@@ -1267,8 +1267,8 @@ An example of a PDF document in figure below is shown in a coordinate system in 
 
 The parameters to be sent are **&quot;WidgetOffsetX&quot;** (label in the image **&quot;LLX&quot;** ) and **&quot;WidgetOffsetY&quot;** (label in the image **&quot;LLY&quot;** ) as coordinates of the lower left corner of the widget, and **&quot;WidgetHeight&quot;** (label in the image **&quot;HEIGHT&quot;** ) and **&quot;WidgetWidth &quot;** (label in the image **&quot; WIDTH &quot;** ) as information about widget height and width in the coordinate system of the PDF document.
 
-![Signature positioning image 1](https://mobile.signator.hr/img/slika_10_api_doc.png)
+![Signature positioning image 1](https://assets.signator.eu/share/img/slika_10_api_doc.png)
 
 The signature image is only one part of the widget (an example of the widget is in the image below), and that needs to be taken into account when determining the values ​​of the parameters to be sent.
 
-![Signature positioning image 2](https://mobile.signator.hr/img/slika_11_api_doc.png)
+![Signature positioning image 2](https://assets.signator.eu/share/img/slika_11_api_doc.png)
