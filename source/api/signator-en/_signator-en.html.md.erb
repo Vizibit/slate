@@ -153,6 +153,7 @@ The advantages of this integration model are:
     "example.address@demo.eu",
     "example.demo@address.eu"
   ],
+  "callbackUrl": "https://origin.example.eu/v/1/receive_signed_document"
   "externalReferenceId": "5e0e4987-e867-4b91-9ad0-ddf93ba45811"
 }
 ```
@@ -221,7 +222,8 @@ calling_system |  | identifier for the calling system
       - &quot;attributeKey&quot;
       - &quot;attributeValue&quot;
     - deliveryAddresses[list<string>] - list of email addresses of users who do not participate in document verification, and to whom the signed document needs to be delivered upon completion of the signing
-    - externalReferenceId - reference id for the document from the calling service
+    - callbackUrl - specifies the URL where the signed document will be sent after all participants have completed the signing process. The system will make a POST request to this URL (supports only anonymous authentication)
+    - externalReferenceId - reference id for the document in the calling service
   - output:
     - &quot;documentId&quot; - ID of the document in the Signator system for later possible retrieval of the status and attributes of the document
     - &quot;documentUrl&quot; - link to open the document in edit mode in Signator so that the initiator can define all parameters of the signing workflow (signers, signature types, signature position)
@@ -295,7 +297,7 @@ Document can be delivered to the user of Signator application for inspection in 
     - &quot;fileName&quot;\* - name of the document for delivery
     - &quot;initiator&quot;\* - email of the owner of the document
     - &quot;recipients&quot;\* [e mail, OIB] - list of recipients with values
-    - Attachments\* [file\*, fileType, fileName\*] - list of attachments to the document to be digitally signed
+    - &quot;attachments&quot;\* [file\*, fileType, fileName\*] - list of attachments to the document to be digitally signed
     - &quot;asAttachment&quot; (_optional parameter)_ - send the document to e-mail as attachment
   - output:
     - &quot;documentId&quot; \* - ID of the document delivered to the recipient
@@ -602,37 +604,31 @@ document_id |  | Id of the document.
   "signedFile": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo=",
   "fileName": "Document name",
   "status": "FINISHED",
-  "attributes": [
+  "statusMessage": "",
+  "finishedAt": 2147483647,
+    "attributes": [
+      {
+        "attributeKey": "string",
+        "attributeValue": "string"
+      }
+    ],
+  "attachments": [
     {
-      "attributeKey": "string",
-      "attributeValue": "string"
+      "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolUVPRgo=",
+      "fileType": "xml",
+      "fileName": "Attachment-12"
     }
-  ]
+  ],
+  "deliveryAddresses": [
+    "example.address@demo.eu",
+    "example.demo@address.eu"
+  ],
+  "callbackUrl": "https://origin.example.eu/v/1/receive_signed_document"
+  "externalReferenceId": "5e0e4987-e867-4b91-9ad0-ddf93ba45811"
 }
 ```
 
-> If successful the above command returns code **200 OK** and JSON body structured like this:
-
-```json
-{
-  "documentId": 123
-}
-```
-> Default error response
-
-```json
-{
-  "type": "error",
-  "info": "string",
-  "errors": [
-    {
-      "property": "string",
-      "errorCode": 0,
-      "passedValue": "string"
-    }
-  ]
-}
-```
+> If successful the above command should return HTTP status code **200 OK**
 
 After the document is digitally signed, Signator calls the function on the SystemX side to pass it the digitally signed document.
 
@@ -640,17 +636,26 @@ After the document is digitally signed, Signator calls the function on the Syste
 - implemented in: SystemX
 - caller: Signator
 - input parameters:
-  - &quot;documentId&quot;\* - ID of the digitally signed document as a reference to SystemX which is the subject document
-  - &quot;documentUrl&quot;\* - the path of the digitally signed document. digitally signed document can be opened from SystemX by opening the path of a specific document. The document can be seen by a person if he/she is a participant in the digital signing workflow or the document has been shared with him/her.
-  - &quot;SignedFile&quot;\* - digitally signed document in the form of base64
-  - &quot;status&quot;\* - document status for documentId
-      - DocumentStatus possible values:
-          - &quot;FINISHED&quot; - all participants signed/approved the document,
-          - &quot;CANCELED&quot; - the initiator of the workflow canceled the workflow,
-          - &quot;REJECTED &quot;- one of the participants in the workflow refused to sign/approve the document
-  - DocumentAttributes\* [attributeKey, attributeValue] - list of attribute names of the digitally signed document and their values.
+  - &quot;documentId&quot; - ID of the digitally signed document as a reference to SystemX which is the subject document
+  - &quot;documentUrl&quot; - the path of the digitally signed document. digitally signed document can be opened from SystemX by opening the path of a specific document. The document can be seen by a person if they are a participant in the digital signing workflow or the document has been shared with them.
+  - &quot;signedFile&quot; - digitally signed document in the form of base64
+  - &quot;status&quot; - document status for documentId with possible values:
+      - &quot;FINISHED&quot; - all participants signed/approved the document
+      - &quot;CANCELED&quot; - the initiator of the workflow canceled the workflow
+      - &quot;REJECTED &quot;- one of the participants in the workflow refused to sign/approve the document
+  - &quot;statusMessage&quot; - document status message in case of REJECTED status, containing the reason for rejection
+  - &quot;finishedAt&quot; - UNIX timestamp for the finished document (UTC)
+  - &quot;attributes&quot;  [attributeKey, attributeValue] - list of attribute names of the digitally signed document and their values
+  - &quot;attachments&quot; [file, fileType, fileName] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
+      - &quot;file&quot; - attachment in base64 format
+      - &quot;fileType&quot; - document type
+      - &quot;fileName&quot; - attachment name
+  - deliveryAddresses[list<string>] - list of email addresses of users who did not participate in document verification, but have received signed document once signing process was finished
+  - callbackUrl - in case URL was specified for sending finished document
+  - externalReferenceId - reference id for the document in the calling service
+
 - output:
-  - &quot; documentId&quot;\* - Document ID in Signator system
+  - &quot; **Http Status Code Ok - HTTP 200**
 
 #### Function: **GetDocumentAttributes**
 
@@ -1216,8 +1221,8 @@ Signator has the ability to host pdf dynamic forms within its interface in a web
     - &quot;fileName&quot;\* - name of pdf document for digital signing,
     - &quot;submittedFormIdentifier&quot;\* - form identifier,
     - &quot;submittedFormData []&quot;\* - filled in data from the form in key: value format,
-    - Attachments\* [file\*, fileType\*, fileName\*] - list of attachments with the form
-      - &quot;File&quot; - attachment in base64 format,
+    - &quot;attachments []&quot;\* [file\*, fileType\*, fileName\*] - list of attachments with the form
+      - &quot;file&quot; - attachment in base64 format,
       - &quot;fileType&quot; - document type,
       - &quot;fileName&quot; - attachment name,
   - output:
