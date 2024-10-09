@@ -217,6 +217,114 @@ In case of an error, the processing is interrupted and the error response is ret
 - The client is responsible for adequate care of the supplied JWT token
 - Data required for the signature purposes is never transmitted in plaintext, and the operation data is stored for audit trail purposes and the data processing can be seen in our Privacy policy
 
+#Local component signing
+
+##Pin caching
+
+> Open PIN cache window
+
+```js
+window.open("https://local.signumid.hr:7439/pin-caching", "_blank");
+
+```
+
+Show the page to cache the PIN in the local component.
+
+**When opening the PIN cache page open it in JavaScript with the provided snippet, otherwise the window wil not close itself.**
+
+PIN cache page:
+[https://local.signumid.hr:7439/pin-caching](https://local.signumid.hr:7439/pin-caching)
+
+
+##Checking pin caching status
+> Check PIN cache call
+
+```http
+GET https://local.signumid.hr:7439/v/1/cached/pin/status HTTP/1.1
+Content-Type: application/json
+
+```
+
+> Check PIN cache response
+
+```json
+{
+  "pinAgeInSeconds": 12,
+  "maxAgeInSeconds": 900
+}
+
+```
+Use the provided endpoint to check if the PIN is still cached.
+
+If the PIN is cached you will receive the information about how long will the PIN be cached and how long has it been cached.
+
+- **pinAgeInSeconds**: Current time in seconds for how long the PIN has been cached
+- **maxAgeInSeconds**: When will the PIN cache expire, maximum duration of the PIN cache
+
+##Perform signature
+> Sign a document in a workflow
+
+```http
+POST https://local.signumid.hr:7439/v/1/local/silent/sign HTTP/1.1
+Content-Type: application/json
+
+{
+  "SignatureToken": "{SignatureToken}",
+  "BaseUrl": "{UrlSignatueBackend}"
+}
+
+```
+**The PIN needs to be cached before attempting to sign a document.**
+
+
+Sign the document using the certificate on the connected smart card/token.
+
+If the signature is successful the response will be HTTP 204 with an empty response.
+
+SignatureToken is acquired from: [Workflow API](#storageid-and-signaturetoken)
+
+##Perform sealing
+> Seal a document in a workflow
+
+```http
+POST https://local.signumid.hr:7439/v/1/local/silent/seal HTTP/1.1
+Content-Type: application/json
+
+{
+  "SignatureToken": "{SignatureToken}",
+  "BaseUrl": "{UrlSignatueBackend}"
+}
+
+```
+
+Seal the document using the preconfigured electronic seal certificate.
+If the sealing is successful the response will be HTTP 204 with an empty response.
+
+SignatureToken is acquired from: [Workflow API](#storageid-and-signaturetoken)
+
+##Local component error codes
+
+All errors return the HTTP status code 400, unless an unforeseen situation has occurred. In that case HTTP status code is 500.
+
+All errors are returned as **JSON**.
+
+List of possible errors on local component signing
+
+Error Code | Meaning
+---------- | -------
+1|UnhandledException
+2|UnableToStartSignature
+3|UnableToStartSeal
+4|UnableToGetLocalComponentSignatureLink
+5|UnableToFinishSeal
+6|UnableToFinishSignature
+7|PinNotCached
+8|CachedCertificateNotFound
+9|SignatureTimedOut
+
+In case of an error, the processing is interrupted and the error response is returned to the caller.
+
+
 #Using the prebuild signer
 If you don't want to perform a integration of our JS API in your application, you can use our prebuilt signer.
 
