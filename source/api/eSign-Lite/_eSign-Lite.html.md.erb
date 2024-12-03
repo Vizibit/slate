@@ -42,6 +42,7 @@ After everything is prepared your backend sends a **HTTP POST** request to "**Si
   "ExpiresAt": "{{Unix UTC timestamp for expiry}}"
   "HttpAuthorizationHeader": "{{HTTP authorization header value}}"
   "HttpMethod": "{{POST or PUT, POST is the default value}}"
+  "SkipSeal": "{{true or false, default value is false}}"
   "SignatureImage": {
       "Page": 0,
       "WidgetOffsetX": 200,
@@ -65,6 +66,7 @@ The API consists of 3 required fields: "**Document**", "**OnSignedCallback**", "
 
 Additionally the API exposes an additional optional fields.
 
+- **SkipSeal** - If the automatic seal is configured, it's possible to skip the addition of the seal
 - **ExpiresAt**  - ExpiresAt determines until when the document is available for signature, default value is 2 days from submission. **After the period expires and the document is not signed the document is automatically deleted from the API**
 - **SignatureImage** - You can optionally send the signature image definition in your workflow request. This signature image will only be used if you supply the **workflow_id** in the query parameter of the esign-lite frontend call.
 
