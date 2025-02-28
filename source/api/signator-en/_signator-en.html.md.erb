@@ -229,6 +229,117 @@ calling_system |  | identifier for the calling system
     - &quot;documentUrl&quot; - link to open the document in edit mode in Signator so that the initiator can define all parameters of the signing workflow (signers, signature types, signature position)
     - &quot;documentSignUrl&quot; - link to open the document in signing mode in Signator so that the user can immediately start document signing
 
+#### Function: UpdateStartedApprovalProcess
+
+> JSON Body input:
+
+```json
+{
+  "participants": [
+    {
+      "email": "example.address@domain.com",
+      "role": "SIGNER",
+      "signatureLevel": "QES",
+      "signatureImage": {
+        "page": 1,
+        "widgetOffsetX": 100,
+        "widgetOffsetY": 200,
+        "widgetWidth": 300,
+        "widgetHeight": 150
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolUVPRgo=",
+      "fileType": "xml",
+      "fileName": "Attachment-12"
+    }
+  ],
+  "attributes": [
+    {
+      "attributeKey": "string",
+      "attributeValue": "string"
+    }
+  ],
+  "deliveryAddresses": [
+    "example.address@demo.eu",
+    "example.demo@address.eu"
+  ],
+  "callbackUrl": "https://origin.example.eu/v/1/receive_signed_document"
+  "externalReferenceId": "5e0e4987-e867-4b91-9ad0-ddf93ba45811"
+}
+```
+
+> If successful the above command returns code **200 OK** and JSON body structured like this:
+
+```json
+{
+  "documentId": 123,
+  "documentUrl": "https://esign.example.com/#/upload/v/1/documents/123"
+  "documentSignUrl": "https://esign.example.com/#/v/1/documents/123"
+}
+```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- SystemX updates workflow for the previously created document in Signator system
+- Note: Only workflows in PENDING state can be updated (workflows that are not in FINISHED, CANCELED, REJECTED, ARCHIVED or DELETED state)
+
+`POST {{GATEWAY-HOST}}/v/1/document/{{calling_system}}/{{document_id}}`
+
+**Route Values**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+calling_system |  | identifier for the calling system
+document_id |  | Id of the document in Signator system
+
+  - function name: **UpdateStartedApprovalProcess**
+  - implemented in: Signator
+  - caller: SystemX
+  - input parameters:
+    - &quot;participants&quot; - [email, role, signatureLevel, signatureImage] - list of signers defined in sequential order (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
+      - &quot;email&quot;\* - email address of the signer
+      - &quot;role&quot; \* - role of the signer - APPROVER, SIGNER
+          - Note: if APPROVER is sent, then the option &quot;SES&quot; must be selected in signature level
+      - &quot;signatureLevel&quot;\*
+          - signatureLevel possible values: &quot;QES&quot; (qualified signature), &quot;AES&quot; (advanced signature), &quot;SES&quot; (stamp). Applies to the SIGNER role only.
+      - [&quot;signatureImage&quot; - signature image with values:](#positioning-of-the-signature-image-seal)
+          - &quot;page&quot;\* - page of the document on which the signature image will be positioned.
+          - &quot;widgetOffsetX&quot;\* - offset from the lower left corner along the x axis.
+          - &quot;widgetOffsetY&quot;\* - offset from the lower left corner along the y axis.
+          - &quot;widgetWidth&quot;\* - the width of the image widget (if the document has a defined signature field this value is ignored).
+          - &quot;widgetHeight&quot;\* - height of the image widget (if the document has a defined signature field this value is ignored).
+    - attachments [file\*, fileType, fileName\*] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
+      - &quot;file&quot; - attachment in base64 format
+      - &quot;fileType&quot; - document type
+      - &quot;fileName&quot; - attachment name
+    - attributes [attributeKey\*, attributeValue\*] - attribute list (those have to be agreed upon before implementation) which will be sent with the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
+      - &quot;attributeKey&quot;
+      - &quot;attributeValue&quot;
+    - deliveryAddresses[list<string>] - list of email addresses of users who do not participate in document verification, and to whom the signed document needs to be delivered upon completion of the signing
+    - callbackUrl - specifies the URL where the signed document will be sent after all participants have completed the signing process. The system will make a POST request to this URL (supports only anonymous authentication)
+    - externalReferenceId - reference id for the document in the calling service
+  - output:
+    - &quot;documentId&quot; - ID of the document in the Signator system for later possible retrieval of the status and attributes of the document
+    - &quot;documentUrl&quot; - link to open the document in edit mode in Signator so that the initiator can define all parameters of the signing workflow (signers, signature types, signature position)
+    - &quot;documentSignUrl&quot; - link to open the document in signing mode in Signator so that the user can immediately start document signing
+
 ### **Optional functions**
 
 #### Function: **ShareFileToRecipient**
