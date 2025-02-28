@@ -300,7 +300,7 @@ calling_system |  | identifier for the calling system
 - SystemX updates workflow for the previously created document in Signator system
 - Note: Only workflows in PENDING state can be updated (workflows that are not in FINISHED, CANCELED, REJECTED, ARCHIVED or DELETED state)
 
-`POST {{GATEWAY-HOST}}/v/1/document/{{calling_system}}/{{document_id}}`
+`PUT {{GATEWAY-HOST}}/v/1/document/{{calling_system}}/{{document_id}}`
 
 **Route Values**
 
@@ -339,6 +339,58 @@ document_id |  | Id of the document in Signator system
     - &quot;documentId&quot; - ID of the document in the Signator system for later possible retrieval of the status and attributes of the document
     - &quot;documentUrl&quot; - link to open the document in edit mode in Signator so that the initiator can define all parameters of the signing workflow (signers, signature types, signature position)
     - &quot;documentSignUrl&quot; - link to open the document in signing mode in Signator so that the user can immediately start document signing
+
+#### Function: **CancelStartedApprovalProcess**
+
+> JSON Body input:
+
+```json
+{
+  "reason": "string"
+}
+```
+
+> If successful the above command returns code **200 OK** and empty JSON body
+
+```json
+
+```
+
+> Default error response
+
+```json
+{
+  "type": "error",
+  "info": "string",
+  "errors": [
+    {
+      "property": "string",
+      "errorCode": 0,
+      "passedValue": "string"
+    }
+  ]
+}
+```
+
+- Cancel workflow previously started in Signator system
+- Note: Only workflows in PENDING state can be updated (workflows that are not in FINISHED, CANCELED, REJECTED, ARCHIVED or DELETED state)
+
+`PUT {{GATEWAY-HOST}}/v/1/document/{{calling_system}}/{{document_id}}/cancel`
+
+**Route Values**
+
+Parameter | Default | Description
+--------- | ------- | -----------
+calling_system |  | identifier for the calling system
+document_id |  | Id of the document in Signator system
+
+  - function name: **CancelStartedApprovalProcess**
+  - implemented in: Signator
+  - caller: SystemX
+  - input parameters:
+    - &quot;reason&quot;\* - reason for the cancellation of the workflow
+  - output:
+    - HTTP **200 OK**
 
 ### **Optional functions**
 
