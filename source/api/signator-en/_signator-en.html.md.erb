@@ -766,6 +766,7 @@ document_id |  | Id of the document.
   "documentUrl": "esign.example.com/#/v/1/document/3",
   "signedFile": "JVBEi0xLjUKJ … shortened for readability … 3MAolJUVPgo=",
   "fileName": "Document name",
+  "fileType": "pdf",
   "status": "FINISHED",
   "statusMessage": "",
   "finishedAt": 2147483647,
@@ -802,6 +803,8 @@ After the document is digitally signed, Signator calls the function on the Syste
   - &quot;documentId&quot; - ID of the digitally signed document as a reference to SystemX which is the subject document
   - &quot;documentUrl&quot; - the path of the digitally signed document. digitally signed document can be opened from SystemX by opening the path of a specific document. The document can be seen by a person if they are a participant in the digital signing workflow or the document has been shared with them.
   - &quot;signedFile&quot; - digitally signed document in the form of base64
+  - &quot;fileName&quot;\* - name of the signed pdf document
+  - &quot;fileType&quot;\* - file type
   - &quot;status&quot; - document status for documentId with possible values:
       - &quot;FINISHED&quot; - all participants signed/approved the document
       - &quot;CANCELED&quot; - the initiator of the workflow canceled the workflow
