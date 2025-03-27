@@ -153,6 +153,11 @@ The advantages of this integration model are:
     "example.address@demo.eu",
     "example.demo@address.eu"
   ],
+  "sharedUsers": [
+    {
+      "email": "example.address@domain.com"
+    }
+  ],
   "callbackUrl": "https://origin.example.eu/v/1/receive_signed_document",
   "externalReferenceId": "5e0e4987-e867-4b91-9ad0-ddf93ba45811"
 }
@@ -222,6 +227,8 @@ calling_system |  | identifier for the calling system
       - &quot;attributeKey&quot;
       - &quot;attributeValue&quot;
     - deliveryAddresses[list<string>] - list of email addresses of users who do not participate in document verification, and to whom the signed document needs to be delivered upon completion of the signing
+    - &quot;sharedUsers&quot; - list of users with whom the workflow will be shared
+      - &quot;email&quot;\* - email address of the user to whom the workflow will be shared
     - callbackUrl - specifies the URL where the signed document will be sent after all participants have completed the signing process. The system will make a POST request to this URL (supports only anonymous authentication)
     - externalReferenceId - reference id for the document in the calling service
   - output:
@@ -265,6 +272,11 @@ calling_system |  | identifier for the calling system
   "deliveryAddresses": [
     "example.address@demo.eu",
     "example.demo@address.eu"
+  ],
+  "sharedUsers": [
+    {
+      "email": "example.address@domain.com"
+    }
   ],
   "callbackUrl": "https://origin.example.eu/v/1/receive_signed_document",
   "externalReferenceId": "5e0e4987-e867-4b91-9ad0-ddf93ba45811"
@@ -333,6 +345,8 @@ document_id |  | Id of the document in Signator system
       - &quot;attributeKey&quot;
       - &quot;attributeValue&quot;
     - deliveryAddresses[list<string>] - list of email addresses of users who do not participate in document verification, and to whom the signed document needs to be delivered upon completion of the signing
+    - &quot;sharedUsers&quot; - list of users with whom the workflow will be shared
+      - &quot;email&quot;\* - email address of the user to whom the workflow will be shared
     - callbackUrl - specifies the URL where the signed document will be sent after all participants have completed the signing process. The system will make a POST request to this URL (supports only anonymous authentication)
     - externalReferenceId - reference id for the document in the calling service
   - output:
