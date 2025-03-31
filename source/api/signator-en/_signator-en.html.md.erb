@@ -833,9 +833,10 @@ After the document is digitally signed, Signator calls the function on the Syste
       - &quot;REJECTED &quot;- one of the participants in the workflow refused to sign/approve the document
   - &quot;statusMessage&quot; - document status message in case of REJECTED status, containing the reason for rejection
   - &quot;finishedAt&quot; - UNIX timestamp for the finished document (UTC)
-  - &quot;participants&quot; - [email, role, signatureLevel, status] - list of defined signers in sequential order
+  - &quot;participants&quot; - list of defined signers in sequential order
       - &quot;email&quot; - email address of the signer
       - &quot;role&quot; - role of the signer - APPROVER, SIGNER
+      - &quot;signatureLevel&quot; - possible values: &quot;QES&quot; (qualified signature), &quot;AES&quot; (advanced signature), &quot;SES&quot; (stamp). For APPROVER signatureLevel SES is always returned
       - &quot;status&quot; -  Status of the participants role in Signator. Possible values: &quot;PENDING&quot; or &quot;FINISHED&quot;
   - &quot;attributes&quot;  [attributeKey, attributeValue] - list of attribute names of the digitally signed document and their values
   - &quot;attachments&quot; [file, fileType, fileName] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
