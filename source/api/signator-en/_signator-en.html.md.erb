@@ -833,7 +833,7 @@ After the document is digitally signed, Signator calls the function on the Syste
       - &quot;REJECTED &quot;- one of the participants in the workflow refused to sign/approve the document
   - &quot;statusMessage&quot; - document status message in case of REJECTED status, containing the reason for rejection
   - &quot;finishedAt&quot; - UNIX timestamp for the finished document (UTC)
-  - &quot;participants&quot; - [email, role, signatureLevel, signatureImage] - list of signers defined in sequential order (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
+  - &quot;participants&quot; - [email, role, signatureLevel, status] - list of defined signers in sequential order
     - &quot;email&quot;\* - email address of the signer
     - &quot;role&quot; \* - role of the signer - APPROVER, SIGNER
         - Note: if APPROVER is sent, then the option &quot;SES&quot; must be selected in signature level
