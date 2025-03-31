@@ -784,12 +784,20 @@ document_id |  | Id of the document.
   "status": "FINISHED",
   "statusMessage": "",
   "finishedAt": 2147483647,
-    "attributes": [
-      {
-        "attributeKey": "string",
-        "attributeValue": "string"
-      }
-    ],
+  "participants": [
+    {
+      "email": "example.address@domain.com",
+      "role": "SIGNER",
+      "signatureLevel": "QES",
+      "status": "FINISHED"
+    }
+  ],
+  "attributes": [
+    {
+      "attributeKey": "string",
+      "attributeValue": "string"
+    }
+  ],
   "attachments": [
     {
       "file": "JVBEi0xLjUKJ … shortened for readability … 3MAolUVPRgo=",
@@ -825,6 +833,12 @@ After the document is digitally signed, Signator calls the function on the Syste
       - &quot;REJECTED &quot;- one of the participants in the workflow refused to sign/approve the document
   - &quot;statusMessage&quot; - document status message in case of REJECTED status, containing the reason for rejection
   - &quot;finishedAt&quot; - UNIX timestamp for the finished document (UTC)
+  - &quot;participants&quot; - [email, role, signatureLevel, signatureImage] - list of signers defined in sequential order (_optional parameter - if this parameter is used, be sure to fill in the following attributes_)
+    - &quot;email&quot;\* - email address of the signer
+    - &quot;role&quot; \* - role of the signer - APPROVER, SIGNER
+        - Note: if APPROVER is sent, then the option &quot;SES&quot; must be selected in signature level
+    - &quot;status&quot;\*
+        -  Status of the participants role in Signator. Possible values: &quot;PENDING&quot; or &quot;FINISHED&quot;
   - &quot;attributes&quot;  [attributeKey, attributeValue] - list of attribute names of the digitally signed document and their values
   - &quot;attachments&quot; [file, fileType, fileName] - list of attachments to the document to be digitally signed. (_optional parameter - if this parameter is used, be sure to fill in the attributes marked with &quot;\*&quot;_)
       - &quot;file&quot; - attachment in base64 format
