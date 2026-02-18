@@ -107,7 +107,7 @@ The parameters to be sent are:
 * **WidgetHeight** (label in the image **HEIGHT**)
 * **WidgetWidth** (label in the image **WIDTH**) as information about widget height and width in the coordinate system of the PDF document
 
-![Signature positioning image 1](https://mobile.signator.hr/img/slika_10_api_doc.png)
+![Signature positioning image 1](https://assets.signator.eu/share/img/slika_10_api_doc.png)
 
 
 > Example of the constructed esign-lite frontend url with the **workflow_id** parameter:
@@ -116,6 +116,19 @@ The parameters to be sent are:
 GET {{GATEWAYHOST}}?workflow_id={{WorkflowId}}&storage_id={{StorageId}}&signature_token={{SignatureToken}}
 
 ```
+
+### Bulk signing functionality
+
+If you want to use the bulk signing functionality, you should follow these steps:
+
+1. Send **n**number of requests to the `POST {{GATEWAYHOST}}/v/1/signature/workflow/pdf/simple` API from your backend
+2. Collect all **StorageId** and **SignatureToken** received from the API
+3. Return these identifiers to your calling frontend
+4. From the frontend, call the `POST https://local.signumid.hr:7439/v/1/local/silent/sign` API for every **StorageId** and **SignatureToken**
+
+The local component will perform the signature, trigger the eSign workflow API, and return the signed document to the calling backend application.
+
+**Note: Perform the PIN caching in advance, otherwise the signing will fail.**
 
 ###Callbacks
 > Callback response "OnSignedCallback"
