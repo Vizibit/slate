@@ -1,0 +1,144 @@
+# Vodič za OIDC integraciju i Just-In-Time (JIT) provizioniranje (C# / .NET)
+
+## 1. Konceptualni pregled: OIDC i JIT provizioniranje
+
+Kako bismo pojednostavili proces integracije i smanjili infrastrukturne zahtjeve, naša arhitektura za upravljanje identitetima koristi standardni OpenID Connect (OIDC) u kombinaciji s "Just-In-Time" (JIT) provizioniranjem. U nastavku je kratak pregled ovih koncepata za integracijske timove:
+
+* **OIDC (OpenID Connect):** Ovo je industrijski standard za autentifikaciju. Umjesto da vaša aplikacija upravlja lokalnim vjerodajnicama (lozinkama i njihovim resetiranjem), autentifikacija se delegira na naš Keycloak Identity Provider. Nakon uspješne prijave, Keycloak isporučuje vašoj aplikaciji siguran token koji sadrži provjerene identifikacijske podatke korisnika (poput jedinstvenog ID-a, imena i e-maila).
+* **JIT (Just-In-Time) provizioniranje:** Tradicionalno, sustavi bi se oslanjali na pozadinske zadatke (task schedulers) ili skripte za sinkronizaciju novih korisnika iz centralnog sustava u lokalnu bazu aplikacije. JIT eliminira taj zahtjev. Umjesto toga, lokalni profil korisnika kreira se dinamički ("upravo na vrijeme") u točnom trenutku kada se korisnik po prvi put uspješno autentificira.
+
+## 2. Tijek integracije
+
+Proces registracije i prijave novog korisnika ne zahtijeva ručnu sinkronizaciju podataka:
+
+1. **Zahtjev za autentifikacijom:** Vaša C# aplikacija preusmjerava neautentificiranog korisnika na naš Keycloak autorizacijski endpoint.
+2. **Akcija korisnika:** Korisnik se prijavljuje ili registrira novi račun na Keycloak sučelju.
+3. **Izdavanje tokena:** Keycloak preusmjerava korisnika natrag u vašu aplikaciju, isporučujući `id_token` (koji sadrži korisničke podatke).
+4. **JIT Evaluacija:** Vaša aplikacija presreće ovaj token i iz njega izvlači jedinstveni Keycloak ID korisnika. Zatim provjerava lokalnu bazu podataka. Ako ID nije pronađen, aplikacija trenutno kreira novi korisnički zapis koristeći podatke iz tokena.
+
+## 3. Zaobilaženje prijave za direktnu registraciju
+
+Ako vaša aplikacija ima zasebnu tipku "Registracija" (Sign Up) i želite usmjeriti korisnike izravno na Keycloak formu za registraciju (preskačući standardni ekran za prijavu), možete dodati parametar `prompt=create` u OIDC zahtjev.
+
+U ASP.NET Core-u, ovo specifično ponašanje možete potaknuti korištenjem `AuthenticationProperties`:
+
+```csharp
+[HttpGet("register")]
+public IActionResult Register()
+{
+    var properties = new AuthenticationProperties { RedirectUri = "/" };
+    // Daje uputu Identity Provideru da izravno prikaže ekran za registraciju
+    properties.Items["prompt"] = "create";
+    return Challenge(properties, OpenIdConnectDefaults.AuthenticationScheme);
+}
+```
+
+## 4. Primjer ASP.NET Core implementacije
+
+U nastavku je cjelovit, standardni primjer implementacije OIDC konfiguracije u ASP.NET Core aplikaciji, uključujući logiku za presretanje potrebnu za JIT provizioniranje.
+
+Ova logika se obično postavlja u `Program.cs` (ili `Startup.cs`). Vezivanjem na `OnTokenValidated` događaj, možemo sigurno izvršiti provjeru baze podataka neposredno nakon što Keycloak potvrdi identitet korisnika.
+
+```csharp
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ... Konfiguracija DbContext-a i ostalih servisa aplikacije ...
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "Cookies";
+    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+})
+.AddCookie("Cookies")
+.AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+{
+    // Keycloak konfiguracijski detalji
+    options.Authority = "https://<KEYCLOAK_DOMAIN>/realms/<REALM_NAME>";
+    options.ClientId = "<VAS_CLIENT_ID>";
+    options.ClientSecret = "<VAS_CLIENT_SECRET>";
+    options.ResponseType = "code";
+    options.SaveTokens = true;
+
+    // Zatraži potrebne podatke o profilu
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+
+    options.Events = new OpenIdConnectEvents
+    {
+        // 1. Upravljanje proslijeđivanjem 'prompt=create' parametra za direktnu registraciju
+        OnRedirectToIdentityProvider = context =>
+        {
+            if (context.Properties.Items.TryGetValue("prompt", out var prompt))
+            {
+                context.ProtocolMessage.Prompt = prompt;
+            }
+            return Task.CompletedTask;
+        },
+
+        // 2. Izvršavanje JIT provizioniranja nakon uspješne autentifikacije
+        OnTokenValidated = async context =>
+        {
+            // Dohvaćanje konteksta baze podataka iz trenutnog zahtjeva
+            var dbContext = context.HttpContext.RequestServices.GetRequiredService<VasaBazaDbContext>();
+
+            var identity = (ClaimsIdentity)context.Principal.Identity;
+
+            // Izvlačenje 'sub' podatka - ovo je nepromjenjivi, jedinstveni Keycloak ID korisnika
+            var keycloakUserId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                              ?? identity.FindFirst("sub")?.Value;
+
+            var email = identity.FindFirst(ClaimTypes.Email)?.Value;
+            var firstName = identity.FindFirst(ClaimTypes.GivenName)?.Value;
+            var lastName = identity.FindFirst(ClaimTypes.Surname)?.Value;
+
+            // Provjera lokalne baze postoji li ovaj korisnik već u sustavu
+            var localUser = await dbContext.Users.FirstOrDefaultAsync(u => u.KeycloakId == keycloakUserId);
+
+            if (localUser == null)
+            {
+                // JIT Kreiranje: Korisnik se uspješno prijavio, ali nema lokalni zapis.
+                localUser = new LocalUser
+                {
+                    KeycloakId = keycloakUserId,
+                    Email = email,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                dbContext.Users.Add(localUser);
+                await dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                // Opcionalno: Sinkronizacija ažuriranih podataka profila s Keycloaka u lokalnu bazu
+                if (localUser.Email != email || localUser.FirstName != firstName)
+                {
+                    localUser.Email = email;
+                    localUser.FirstName = firstName;
+                    localUser.LastName = lastName;
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+        }
+    };
+});
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+// ...
+app.Run();
+```
+
+## Napomene o implementaciji
+
+**Jedinstveni identifikator:** Uvijek koristite `sub` (Subject) vrijednost kao primarni vanjski ključ (foreign key) koji se veže na vašu lokalnu tablicu korisnika. E-mail adrese se mogu promijeniti, ali `sub` vrijednost je nepromjenjiva.
+
+**Infrastruktura:** Ovaj pristup baziran na događajima (event-driven) garantira da korisnički zapisi postoje prije nego što se izvrši domenska logika vaše aplikacije, čime se u potpunosti uklanja potreba za razvojem i održavanjem zasebne infrastrukture za sinkronizaciju podataka.

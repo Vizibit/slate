@@ -1,0 +1,144 @@
+# OIDC Integration & Just-In-Time (JIT) Provisioning Guide (C# / .NET)
+
+## 1. Conceptual Overview: OIDC and JIT Provisioning
+
+To streamline the integration process and reduce infrastructure overhead, our identity architecture utilizes standard OpenID Connect (OIDC) paired with Just-In-Time (JIT) provisioning. Here is a brief overview of these concepts for integrating teams:
+
+* **OIDC (OpenID Connect):** This is an industry-standard authentication protocol. Instead of your application managing local credentials (passwords, password resets), authentication is delegated to our Keycloak Identity Provider. Upon successful login, Keycloak provides your application with a secure token containing the user's verified identity information (such as unique ID, name, and email).
+* **JIT (Just-In-Time) Provisioning:** Traditionally, systems might rely on background task schedulers or batch scripts to synchronize new users from a central identity provider to a local application database. JIT eliminates this requirement. Instead, the user's local application profile is created dynamically ("just in time") at the exact moment they authenticate for the very first time.
+
+## 2. The Integration Flow
+
+The process of registering and logging in a new user requires no manual data synchronization:
+
+1. **Authentication Request:** Your C# application redirects the unauthenticated user to our Keycloak authorization endpoint.
+2. **User Action:** The user either logs in or registers a new account on the Keycloak interface.
+3. **Token Issuance:** Keycloak redirects the user back to your application, providing an `id_token` (which contains their profile claims).
+4. **JIT Evaluation:** Your application intercepts this token and extracts the user's unique Keycloak ID. It queries your local database. If the ID is not found, your application instantly creates the new user record using the details provided in the token.
+
+## 3. Bypassing Login for Direct Registration
+
+If your application UI features a distinct "Sign Up" button and you wish to route users directly to the Keycloak registration form (bypassing the standard login prompt), you can append the `prompt=create` parameter to the OIDC request.
+
+In ASP.NET Core, you can trigger this specific behavior using `AuthenticationProperties`:
+
+```csharp
+[HttpGet("register")]
+public IActionResult Register()
+{
+    var properties = new AuthenticationProperties { RedirectUri = "/" };
+    // Instructs the Identity Provider to render the registration screen directly
+    properties.Items["prompt"] = "create";
+    return Challenge(properties, OpenIdConnectDefaults.AuthenticationScheme);
+}
+```
+
+## 4. ASP.NET Core Implementation Example
+
+Below is a complete, standard implementation for configuring OIDC in an ASP.NET Core application, including the interception logic required for JIT provisioning.
+
+This logic is typically placed in `Program.cs` (or `Startup.cs`). By hooking into the `OnTokenValidated` event, we can safely perform database checks immediately after Keycloak verifies the user.
+
+```csharp
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ... Configure DbContext and other application services ...
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "Cookies";
+    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+})
+.AddCookie("Cookies")
+.AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+{
+    // Keycloak Configuration details
+    options.Authority = "https://<KEYCLOAK_DOMAIN>/realms/<REALM_NAME>";
+    options.ClientId = "<YOUR_CLIENT_ID>";
+    options.ClientSecret = "<YOUR_CLIENT_SECRET>";
+    options.ResponseType = "code";
+    options.SaveTokens = true;
+
+    // Request necessary profile claims
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+
+    options.Events = new OpenIdConnectEvents
+    {
+        // 1. Handle passing the 'prompt=create' parameter for direct registration
+        OnRedirectToIdentityProvider = context =>
+        {
+            if (context.Properties.Items.TryGetValue("prompt", out var prompt))
+            {
+                context.ProtocolMessage.Prompt = prompt;
+            }
+            return Task.CompletedTask;
+        },
+
+        // 2. Execute JIT Provisioning upon successful authentication
+        OnTokenValidated = async context =>
+        {
+            // Resolve your database context from the current request
+            var dbContext = context.HttpContext.RequestServices.GetRequiredService<YourDbContext>();
+
+            var identity = (ClaimsIdentity)context.Principal.Identity;
+
+            // Extract the 'sub' claim - this is the immutable, unique Keycloak User ID
+            var keycloakUserId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                              ?? identity.FindFirst("sub")?.Value;
+
+            var email = identity.FindFirst(ClaimTypes.Email)?.Value;
+            var firstName = identity.FindFirst(ClaimTypes.GivenName)?.Value;
+            var lastName = identity.FindFirst(ClaimTypes.Surname)?.Value;
+
+            // Query the local database to see if this user already exists
+            var localUser = await dbContext.Users.FirstOrDefaultAsync(u => u.KeycloakId == keycloakUserId);
+
+            if (localUser == null)
+            {
+                // JIT Creation: The user authenticated successfully but has no local record.
+                localUser = new LocalUser
+                {
+                    KeycloakId = keycloakUserId,
+                    Email = email,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                dbContext.Users.Add(localUser);
+                await dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                // Optional: Sync updated profile data from Keycloak to the local database
+                if (localUser.Email != email || localUser.FirstName != firstName)
+                {
+                    localUser.Email = email;
+                    localUser.FirstName = firstName;
+                    localUser.LastName = lastName;
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+        }
+    };
+});
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+// ...
+app.Run();
+```
+
+## Implementation Notes
+
+**Unique Identifier:** Always use the `sub` (Subject) claim as the primary foreign key mapping to your local user table. Email addresses can change, but the `sub` claim is immutable.
+
+**Infrastructure:** This event-driven approach guarantees that user records exist before your application's domain logic executes, entirely removing the need for dedicated synchronization infrastructure.
