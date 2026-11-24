@@ -1,0 +1,1115 @@
+# Introduction
+
+The **Standalone Signer** lets any application add qualified (QES), advanced (AdES) or organisation-seal signatures to PDF documents with one backend call, one embeddable signing component and one webhook. You do not integrate trust service providers, identification, PAdES, certificates or timestamping: the Standalone Signer and the ViziBit Signing Service handle all of that.
+
+This guide is the starting point for every integration of the Standalone Signer. It is written for partners integrating the service into their products and for ViziBit teams building or supporting integrations.
+
+**Your integration does three things:**
+
+1. **Backend — create a signature request.** Send the PDF, the signing policy (level and allowed providers) and two webhook URLs. You receive a `signatureRequestId` and a per-document `signatureToken`.
+2. **Frontend — let the user sign.** Embed the JavaScript SDK with the `signatureToken`. The signer previews the document, places the signature and signs with one of the providers you allowed. The signer never logs in to a ViziBit product.
+3. **Backend — complete.** Receive the webhook, download the signed PDF and store it.
+
+**What the Standalone Signer does not do:** it does not orchestrate multi-party workflows (signing order, signer replacement, reminders, escalations). One signature request produces one signature. Your application chains requests when a document needs several signatures (see [Several signatures on one document](#several-signatures-on-one-document)).
+
+<aside class="notice">
+The base URL of your environment and your API credentials (<code>client_id</code> / <code>client_secret</code>) are provided by ViziBit for each integration team. In this guide they appear as the placeholders <code>{{SIGNER_HOST}}</code>, <code>{{CLIENT_ID}}</code> and <code>{{CLIENT_SECRET}}</code>.
+</aside>
+
+## Base URL and environments
+
+All API endpoints share the prefix `/v/1/signature/standalone` on the Standalone Signer host.
+
+| Environment | Base URL | Notes |
+|---|---|---|
+| Sandbox | `https://{{SIGNER_HOST}}/v/1/signature/standalone` | Provided with your sandbox credentials. Use it for development and testing. |
+| Production (cloud) | `https://{{SIGNER_HOST}}/v/1/signature/standalone` | Provided when you go live. |
+| On-premise | defined by your installation | Same API. See [Operations and on-premise deployment](#operations-and-on-premise-deployment). |
+
+Other useful URLs on every host:
+
+| URL | Purpose |
+|---|---|
+| `https://{{SIGNER_HOST}}/v/1/signature/swagger` | Swagger UI / OpenAPI description |
+| `https://{{SIGNER_HOST}}/sdk/signator-signer-sdk.js` | JavaScript SDK |
+| `https://{{SIGNER_HOST}}/sdk-test.html` | SDK test harness |
+| `https://{{SIGNER_HOST}}/` | Signature request dashboard (sign in with your API client) |
+| `https://{{SIGNER_HOST}}/admin.html` | API client administration |
+| `https://{{SIGNER_HOST}}/v/1/signature/health/basic` | Liveness |
+| `https://{{SIGNER_HOST}}/v/1/signature/health/ready` | Readiness (database reachable) |
+
+## Concepts
+
+| Concept | Meaning |
+|---|---|
+| **API client** | Your application's identity: `client_id` and `client_secret`. Used only by your **backend**. Each client sees only its own signature requests. A client can belong to a **partner** (used to aggregate usage) and can have **seals** assigned to it. |
+| **Access token** | OAuth2 bearer token obtained with the client credentials (valid 1 hour). Authorises the backend endpoints. |
+| **Signature request** | One PDF waiting for one signature, identified by `signatureRequestId`. It carries the **signing policy** you defined: level, allowed providers, jurisdiction, seal, signer phone number and whether identification is allowed. |
+| **Signature token** | JWT returned when a request is created. It is scoped to that one request and valid until the request expires. It authorises the signing UI (preview, sign, reject, status) for that document only, so it is safe to hand to the signer's browser. |
+| **Webhooks** | Two URLs you supply per request. The service calls one of them when the request reaches its outcome. |
+| **External reference** | Your own identifier for the document (e.g. a contract id). It is returned in every response and webhook and is searchable in the dashboard. |
+
+## Signature levels and providers
+
+The level and the providers the signer may use are decided by **your backend** when it creates the request. The signing UI can only choose among the providers you allowed; it can never change the level, the seal, the jurisdiction or the phone number.
+
+| `signatureLevel` | Meaning | Allowed `providers` |
+|---|---|---|
+| `QES` | Qualified electronic signature (legal equivalent of a handwritten signature in the EU) | `FinaRiws`, `CertiliaSdurddV1`, `CertiliaCommercialV1`, `LocalComponentV1`, `SwisscomEtsiV1`, `ATrustCscV1` |
+| `AES` | Advanced electronic signature | `SwisscomEtsiV1`, `LocalComponentV1` |
+| `SES` | Organisation seal (PKCS#12 seal held by the Signing Service), applied without user interaction | none — the seal is selected with `sealId` |
+
+| Provider | What the signer uses | Notes |
+|---|---|---|
+| `FinaRiws` | FINA remote signature, approved on the signer's mobile device | `signer.phoneNumber` is **required**. QES only. |
+| `CertiliaSdurddV1` | Certilia (AKD) remote signing with the national identity card (eOI) certificate | QES only. |
+| `CertiliaCommercialV1` | Certilia (AKD) commercial cloud certificate | QES only. |
+| `LocalComponentV1` | Smart card or USB token (e.g. FINA or AKD cards) through the ViziBit local component installed on the signer's computer | QES, or AES when the request asks for AES. |
+| `SwisscomEtsiV1` | Swisscom remote signature, including Swisscom's own online or video identification | QES or AES. `jurisdiction` `EIDAS` (default) or `ZERTES` (Swiss law). Optional `signer.phoneNumber` as login hint. |
+| `ATrustCscV1` | A-Trust (ID Austria) | QES only. |
+
+Signatures are embedded in the PDF as PAdES signatures with a trusted timestamp. Only the document hash leaves the Standalone Signer; the PDF itself is never sent to the provider.
+
+<aside class="notice">
+For providers that read the certificate from the signer's own device (<code>LocalComponentV1</code>), the legal level of the resulting signature depends on the certificate the signer uses. Requesting <code>AES</code> records the signature as advanced.
+</aside>
+
+# Integration flow
+
+```text
+ Your backend            Your frontend + SDK          Standalone Signer          Provider
+ ------------            -------------------          -----------------          --------
+ 1  POST /connect/token  ─────────────────────────────▶ access_token
+ 2  POST /integration    ─────────────────────────────▶ { signatureRequestId,
+    (PDF, policy, webhooks)                               signatureToken }
+ 3  hand signatureToken ─▶ SignatorSigner.create(...)
+ 4                         GET /pdf/state, /pdf/download ▶ policy + PDF preview
+ 5                         signer clicks "Sign" (chooses provider if several)
+ 6                         POST /pdf/init ───────────────▶ QES/AES: hash ───────────▶ consent page
+ 7                         (SDK sends signer to the provider, signer approves)     ◀─ signed hash
+ 8                                                        embed signature + timestamp
+ 9  ◀──────────────────────────────────────── webhook { state: "Signed", ... }
+10  GET /integration/{id}/document ────────────────────▶ signed PDF
+11  DELETE /integration/{id}/document (optional)
+```
+
+1. Your backend obtains an access token with its client credentials.
+2. Your backend creates a signature request with the PDF, the signing policy and the webhook URLs, and stores the returned `signatureRequestId` and `signatureToken` with its own document.
+3. Your frontend asks your backend for the `signatureToken` of the document the user should sign and mounts the SDK with it.
+4. The SDK loads the signing policy and the PDF.
+5. The signer places the signature (optional) and clicks **Sign**. When several providers are allowed, the SDK asks which one to use.
+6. For QES/AES the Standalone Signer sends the document hash to the provider; for SES it seals immediately.
+7. The SDK sends the signer to the provider's consent page; the signer authenticates and approves.
+8. The Standalone Signer embeds the signature and timestamp into the PDF.
+9. Your backend receives the webhook with the outcome.
+10. Your backend downloads the signed PDF.
+11. Optionally, your backend deletes the copy kept by the Standalone Signer.
+
+## Request states
+
+| State | Meaning | Terminal |
+|---|---|---|
+| `Initialized` | Created, waiting for the signer. | no |
+| `WaitingForUserApproval` | Signing started; the signer is at the provider. | no |
+| `Signed` | The document is signed; the success webhook is being delivered. | yes (success) |
+| `Finished` | Signed and the success webhook was processed. Treat it exactly like `Signed`. | yes (success) |
+| `Failed` | The provider or the signing failed. | yes |
+| `Rejected` | The signer or your backend rejected the request. | yes |
+| `Expired` | `expiresAt` passed before the request was signed. | yes |
+
+```text
+                    POST /pdf/init (SES)
+ Initialized ──────────────────────────────────────────────▶ Signed ──▶ Finished
+     │  POST /pdf/init (QES/AES)                                ▲
+     ▼                                                          │ provider signed
+ WaitingForUserApproval ────────────────────────────────────────┘
+     │  provider error / timeout ─▶ Failed
+     │  reject (signer or backend) ─▶ Rejected
+     └─ expiresAt passed ─▶ Expired   (also from Initialized)
+```
+
+* A QES/AES ceremony waits up to 90 minutes for the signer at the provider and then fails.
+* A request reaches exactly one outcome. Late or duplicate provider results after that are ignored.
+* A failed, rejected or expired request cannot be signed again: create a new request.
+* Deleting the stored document does not change the state; it sets `documentDeletedAt`.
+
+# Authentication
+
+There are **two different bearer tokens**:
+
+| Token | How you get it | Used for | Who may hold it |
+|---|---|---|---|
+| **Access token** | `POST /connect/token` with your `client_id` and `client_secret` | All `/integration/*` endpoints, `/usage`, `/dashboard/*`, `/admin/*` | Your backend only |
+| **Signature token** | Returned by `POST /integration` | The `/pdf/*` endpoints used by the SDK | Your backend and the signer's browser |
+
+Sending an access token to a `/pdf/*` endpoint returns `401` with `errorCode` `30019`.
+
+## Get an access token
+
+```shell
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/connect/token" \
+  -d grant_type=client_credentials \
+  -d client_id={{CLIENT_ID}} \
+  -d client_secret={{CLIENT_SECRET}}
+```
+
+```csharp
+using var http = new HttpClient { BaseAddress = new Uri("https://{{SIGNER_HOST}}/v/1/signature/standalone/") };
+
+var tokenResponse = await http.PostAsync("connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
+{
+    ["grant_type"] = "client_credentials",
+    ["client_id"] = "{{CLIENT_ID}}",
+    ["client_secret"] = "{{CLIENT_SECRET}}"
+}));
+tokenResponse.EnsureSuccessStatusCode();
+var token = await tokenResponse.Content.ReadFromJsonAsync<JsonElement>();
+var accessToken = token.GetProperty("access_token").GetString();
+```
+
+```javascript
+// Node.js 18+ (backend only — never expose the client secret to a browser)
+const res = await fetch('https://{{SIGNER_HOST}}/v/1/signature/standalone/connect/token', {
+  method: 'POST',
+  body: new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: '{{CLIENT_ID}}',
+    client_secret: '{{CLIENT_SECRET}}'
+  })
+});
+const { access_token: accessToken } = await res.json();
+```
+
+> Response
+
+```json
+{
+  "access_token": "eyJhbGciOi…",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+`POST /v/1/signature/standalone/connect/token`
+
+Standard OAuth2 client credentials grant (`application/x-www-form-urlencoded`). HTTP Basic client authentication (`Authorization: Basic base64(client_id:client_secret)`) is also accepted.
+
+Cache the access token until shortly before `expires_in` elapses instead of requesting one per call.
+
+## Credentials
+
+* ViziBit creates your API client and gives you the `client_id` and `client_secret` per integration team and environment. The secret is shown once; store it in a secret manager.
+* You can rotate your own secret at any time: `POST /admin/clients/{{CLIENT_ID}}/rotate-secret` with body `{}` returns a new random secret (see [Administration](#administration-api-clients)).
+* Never put the client secret in a browser or mobile app. The browser only ever receives a signature token.
+
+# Signature requests
+
+Backend endpoints. All require the **access token** (`Authorization: Bearer <access_token>`). JSON bodies are read case-insensitively; responses use camelCase. Binary content (`document`, image data) is base64.
+
+## Create a signature request
+
+```shell
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "document": "JVBERi0xLjcK…",
+    "documentName": "Employment contract - Ivana Horvat.pdf",
+    "externalReference": "hr/contracts/4711",
+    "signatureLevel": "QES",
+    "providers": ["FinaRiws", "CertiliaSdurddV1", "LocalComponentV1"],
+    "signer": { "phoneNumber": "+385911234567" },
+    "signatureImage": {
+      "page": 3, "widgetOffsetX": 355, "widgetOffsetY": 40,
+      "widgetWidth": 200, "widgetHeight": 70,
+      "appearance": 1, "lineOne": "Ivana Horvat", "lineTwo": "Employee"
+    },
+    "callbacks": {
+      "onSigned": "https://app.example.com/hooks/signature/signed",
+      "onError": "https://app.example.com/hooks/signature/error",
+      "authorizationHeader": "Bearer 6f1c0b4e9a2d…"
+    },
+    "expiresAt": "2026-12-31T23:00:00Z"
+  }'
+```
+
+```csharp
+var request = new
+{
+    document = Convert.ToBase64String(pdfBytes),
+    documentName = "Employment contract - Ivana Horvat.pdf",
+    externalReference = "hr/contracts/4711",
+    signatureLevel = "QES",
+    providers = new[] { "FinaRiws", "CertiliaSdurddV1", "LocalComponentV1" },
+    signer = new { phoneNumber = "+385911234567" },
+    callbacks = new
+    {
+        onSigned = "https://app.example.com/hooks/signature/signed",
+        onError = "https://app.example.com/hooks/signature/error",
+        authorizationHeader = $"Bearer {webhookSecret}"
+    },
+    expiresAt = DateTimeOffset.UtcNow.AddDays(7)
+};
+
+http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+var response = await http.PostAsJsonAsync("integration", request);
+response.EnsureSuccessStatusCode(); // 201 Created
+var created = await response.Content.ReadFromJsonAsync<JsonElement>();
+var signatureRequestId = created.GetProperty("signatureRequestId").GetGuid();
+var signatureToken = created.GetProperty("signatureToken").GetString();
+```
+
+```javascript
+const res = await fetch('https://{{SIGNER_HOST}}/v/1/signature/standalone/integration', {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    document: pdfBuffer.toString('base64'),
+    documentName: 'Employment contract - Ivana Horvat.pdf',
+    externalReference: 'hr/contracts/4711',
+    signatureLevel: 'QES',
+    providers: ['FinaRiws', 'CertiliaSdurddV1', 'LocalComponentV1'],
+    signer: { phoneNumber: '+385911234567' },
+    callbacks: {
+      onSigned: 'https://app.example.com/hooks/signature/signed',
+      onError: 'https://app.example.com/hooks/signature/error',
+      authorizationHeader: `Bearer ${webhookSecret}`
+    },
+    expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString()
+  })
+});
+if (res.status !== 201) throw new Error(`Create failed: ${res.status} ${await res.text()}`);
+const { signatureRequestId, signatureToken } = await res.json();
+```
+
+> Response `201 Created` (header `Location: /v/1/signature/standalone/integration/{signatureRequestId}`)
+
+```json
+{
+  "signatureRequestId": "3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11",
+  "signatureToken": "eyJhbGciOiJIUzI1NiIs…",
+  "state": "Initialized",
+  "expiresAt": "2026-12-31T23:00:00Z",
+  "signatureLevel": "QES",
+  "providers": ["FinaRiws", "CertiliaSdurddV1", "LocalComponentV1"],
+  "jurisdiction": "EIDAS",
+  "sealId": null,
+  "allowIdentification": false,
+  "documentName": "Employment contract - Ivana Horvat.pdf",
+  "externalReference": "hr/contracts/4711"
+}
+```
+
+`POST /v/1/signature/standalone/integration`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `document` | string (base64) | yes | The PDF to sign. |
+| `documentName` | string (≤ 255) | no | File name used for downloads and shown on the dashboard. Folder parts are removed. |
+| `externalReference` | string (≤ 256) | no | Your identifier for the document. Returned in responses and webhooks; searchable in the dashboard; never shown to the signer. |
+| `signatureLevel` | string | yes | `QES`, `AES` or `SES`. |
+| `providers` | string[] | QES/AES | Providers the signer may use, in the order they are offered. See [Signature levels and providers](#signature-levels-and-providers). Not allowed for `SES`. |
+| `jurisdiction` | string | no | `EIDAS` (default) or `ZERTES`. `ZERTES` (Swiss law) requires `SwisscomEtsiV1` as the only provider. Not used for `SES`. |
+| `sealId` | string | SES | Seal to apply. May be omitted when exactly one seal is assigned to your API client. Must be a seal assigned to your client. Not allowed for QES/AES. |
+| `signer.phoneNumber` | string | for `FinaRiws` | The signer's mobile number in international format (e.g. `+385911234567`; spaces, dashes and parentheses are removed). Required when `FinaRiws` is allowed; optional login hint for `SwisscomEtsiV1`. Ignored when no allowed provider uses it, and kept only until signing starts. |
+| `allowIdentification` | boolean | no | Lets a signer without a digital identity start remote identification from the signing UI. QES/AES only. See [Identification](#identification-of-signers-without-a-digital-identity). |
+| `signatureImage` | object | no | Default position and appearance of the visible signature. See [Signature appearance](#signature-appearance). Without it the signature is invisible unless the signer places one. |
+| `callbacks.onSigned` | URL | yes | Absolute `http`/`https` URL called when the document is signed. |
+| `callbacks.onError` | URL | yes | Absolute `http`/`https` URL called when signing failed, was rejected or expired. |
+| `callbacks.method` | string | no | `POST` (default), `PUT`, `PATCH` or `DELETE`. |
+| `callbacks.authorizationHeader` | string (≤ 4096) | no | Sent verbatim as the `Authorization` header of both webhooks. Use a random secret per request. |
+| `expiresAt` | string / number | no | Deadline as ISO 8601 date-time or Unix time in **seconds** (not milliseconds — JavaScript `Date.now()` must be divided by 1000). Default: 2 days after creation. Must be at least one minute in the future and at most 90 days ahead (defaults; an installation may configure other limits). |
+
+Store `signatureRequestId`, `signatureToken`, your webhook secret and `expiresAt` together with your document.
+
+<aside class="warning">
+<code>expiresAt</code> also ends the life of the signature token and of the stored PDF: after it passes, the request is expired if still unsigned and the stored document (signed or not) is deleted. Download the signed PDF as soon as you receive the success webhook.
+</aside>
+
+### Signing policy rules
+
+* `signatureLevel` is required; `QES` and `AES` need at least one provider; `SES` takes no providers.
+* `AES` is available only with `SwisscomEtsiV1` and `LocalComponentV1`. Any other provider returns `400` with `errorCode` `53`.
+* Unknown providers, or providers not available in the Standalone Signer, return `400` with `errorCode` `186`.
+* `FinaRiws` requires `signer.phoneNumber`.
+* `ZERTES` is only possible when `SwisscomEtsiV1` is the only provider; `SES` takes no jurisdiction.
+* `SES` uses a seal assigned to your API client: a seal that is not assigned returns `403` (`errorCode` `205`); if no seal is assigned to the client, `403` as well.
+* `allowIdentification` is rejected for `SES`.
+* Everything in the policy is fixed when the request is created. The signing UI may only choose one of `providers`.
+
+### Signature appearance
+
+> Visible signature: 200 × 70 pt box, 40 pt from the right and bottom edges of an A4 page
+
+```json
+{
+  "page": 3,
+  "widgetOffsetX": 355,
+  "widgetOffsetY": 40,
+  "widgetWidth": 200,
+  "widgetHeight": 70,
+  "appearance": 1,
+  "lineOne": "Ivana Horvat",
+  "lineTwo": "Employee",
+  "useHandwrittenStyle": true
+}
+```
+
+The `signatureImage` object describes where the visible signature goes and what it looks like. The signature is visible when `widgetOffsetX` and `widgetOffsetY` are set.
+
+| Field | Type | Description |
+|---|---|---|
+| `page` | int | 1-based page number. |
+| `widgetOffsetX` | number | Distance in PDF points (1/72 inch) from the left edge of the page. |
+| `widgetOffsetY` | number | Distance in PDF points from the **bottom** edge of the page to the bottom of the box. |
+| `widgetWidth`, `widgetHeight` | number | Size of the box in PDF points. Always set both. |
+| `appearance` | **number** | `1` = card generated by ViziBit (default, embedded as vector graphics); `0` = your image as-is. Send the number, not a string. |
+| `lineOne` … `lineFour` | string | Text lines of the generated card (name, role, company…). |
+| `useHandwrittenStyle` | bool | Card: render `lineOne` in a handwriting font. |
+| `logoImageData` | base64 | Card: optional logo. |
+| `imageData` | base64 | Image (PNG or JPEG) when `appearance` is `0`. |
+| `fileType` | number | `0` = JPEG, `1` = PNG (with `appearance` `0`). |
+
+An A4 page is 595 × 842 points. A box in the bottom-right corner with 40 pt margins: `widgetOffsetX = 595 − 40 − width`, `widgetOffsetY = 40`.
+
+**Who decides the placement:** the position sent when the signer places the signature in the SDK overrides the one from the create request. To fix the placement (e.g. the signature field of a contract template), set `signatureImage` when creating the request and mount the SDK **without** signature options: the signer then only clicks **Sign**.
+
+`POST /v/1/signature/standalone/signature_image/preview` (no authentication) takes the same object and returns a PNG preview of the generated card.
+
+## Get a signature request
+
+```shell
+curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+```csharp
+var details = await http.GetFromJsonAsync<JsonElement>($"integration/{signatureRequestId}");
+var state = details.GetProperty("state").GetString();
+var signed = details.GetProperty("signed").GetBoolean();
+```
+
+```javascript
+const res = await fetch(`https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/${signatureRequestId}`, {
+  headers: { Authorization: `Bearer ${accessToken}` }
+});
+const details = await res.json();
+```
+
+> Response `200 OK`
+
+```json
+{
+  "signatureRequestId": "3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11",
+  "clientId": "{{CLIENT_ID}}",
+  "partner": "acme-partner",
+  "externalReference": "hr/contracts/4711",
+  "documentName": "Employment contract - Ivana Horvat.pdf",
+  "state": "Finished",
+  "signed": true,
+  "signatureLevel": "QES",
+  "providers": ["FinaRiws", "CertiliaSdurddV1", "LocalComponentV1"],
+  "provider": "FinaRiws",
+  "jurisdiction": "EIDAS",
+  "sealId": null,
+  "allowIdentification": false,
+  "createdAt": "2026-11-24T10:00:00Z",
+  "signedAt": "2026-11-24T10:04:12Z",
+  "finishedAt": "2026-11-24T10:04:12Z",
+  "expiresAt": "2026-12-31T23:00:00Z",
+  "documentDeletedAt": null,
+  "errorCode": null,
+  "message": null
+}
+```
+
+`GET /v/1/signature/standalone/integration/{signatureRequestId}`
+
+Returns the full status of one of your requests. Use it to reconcile lost webhooks or to show progress in your UI. `provider` is the provider the signer actually used (`GenericPkcs12Seal` for seals). Requests of other API clients return `404`.
+
+## Download the document
+
+```shell
+curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11/document" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -o signed.pdf
+```
+
+```csharp
+var pdf = await http.GetByteArrayAsync($"integration/{signatureRequestId}/document");
+await File.WriteAllBytesAsync("signed.pdf", pdf);
+```
+
+```javascript
+const res = await fetch(`https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/${signatureRequestId}/document`, {
+  headers: { Authorization: `Bearer ${accessToken}` }
+});
+const pdf = Buffer.from(await res.arrayBuffer());
+```
+
+`GET /v/1/signature/standalone/integration/{signatureRequestId}/document`
+
+Returns the current PDF (`application/pdf`, with a `Content-Disposition` file name): the original before signing, the **signed** PDF once the state is `Signed` or `Finished`. Returns `410` (`errorCode` `30016`) after the document was deleted.
+
+## Reject (cancel) a request
+
+```shell
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11/reject" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "reason": "Contract withdrawn" }'
+```
+
+```csharp
+await http.PostAsJsonAsync($"integration/{signatureRequestId}/reject", new { reason = "Contract withdrawn" });
+```
+
+```javascript
+await fetch(`https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/${signatureRequestId}/reject`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ reason: 'Contract withdrawn' })
+});
+```
+
+`POST /v/1/signature/standalone/integration/{signatureRequestId}/reject`
+
+Withdraws a request that has not been signed yet (e.g. the document was replaced). The state becomes `Rejected`, the error webhook is sent with `errorCode` `StandaloneIntegrationSignatureRejected` and your `reason` as `message`. Returns `204`; `409` if the request already reached an outcome. The body is optional.
+
+## Delete the stored document
+
+`DELETE /v/1/signature/standalone/integration/{signatureRequestId}/document`
+
+Deletes the PDF kept by the Standalone Signer once you have stored the signed copy. Allowed only when the request is no longer in progress (`409` otherwise). Returns `204`. Documents are deleted automatically when `expiresAt` passes.
+
+## Usage report
+
+```shell
+curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/usage?from=2026-11-01&to=2026-12-01" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+> Response `200 OK`
+
+```json
+{
+  "from": "2026-11-01T00:00:00Z",
+  "to": "2026-12-01T00:00:00Z",
+  "totalSignatures": 1342,
+  "items": [
+    { "month": "2026-11", "partner": "acme-partner", "clientId": "{{CLIENT_ID}}",
+      "signatureLevel": "QES", "provider": "FinaRiws", "jurisdiction": "EIDAS", "signatures": 1101 },
+    { "month": "2026-11", "partner": "acme-partner", "clientId": "{{CLIENT_ID}}",
+      "signatureLevel": "SES", "provider": "GenericPkcs12Seal", "jurisdiction": "EIDAS", "signatures": 241 }
+  ],
+  "clients": [ { "clientId": "{{CLIENT_ID}}", "partner": "acme-partner", "signatures": 1342 } ],
+  "partners": [ { "partner": "acme-partner", "signatures": 1342 } ]
+}
+```
+
+`GET /v/1/signature/standalone/usage?from=&to=&clientId=&partner=`
+
+Completed signatures (by the time they were signed) in the range `[from, to)`, per month, partner, client, level, provider and jurisdiction, with totals per client and per partner.
+
+| Parameter | Description |
+|---|---|
+| `from`, `to` | Date or date-time (UTC). Default: the current calendar month. The range may span at most 400 days. |
+| `clientId`, `partner` | Filters, available to administrators. Other clients always receive only their own usage. |
+
+The same signatures are also reported to ViziBit's central usage tracking with your client id.
+
+# Webhooks
+
+> Success — sent to `callbacks.onSigned`
+
+```http
+POST /hooks/signature/signed HTTP/1.1
+Host: app.example.com
+Content-Type: application/json
+Authorization: Bearer 6f1c0b4e9a2d…
+
+{
+  "signatureRequestId": "3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11",
+  "externalReference": "hr/contracts/4711",
+  "clientId": "{{CLIENT_ID}}",
+  "state": "Signed",
+  "success": true,
+  "signatureLevel": "QES",
+  "provider": "FinaRiws",
+  "documentName": "Employment contract - Ivana Horvat.pdf",
+  "errorCode": null,
+  "message": null,
+  "signedAt": "2026-11-24T10:04:12Z",
+  "finishedAt": "2026-11-24T10:04:12Z"
+}
+```
+
+> Failure — sent to `callbacks.onError`
+
+```json
+{
+  "signatureRequestId": "3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11",
+  "externalReference": "hr/contracts/4711",
+  "clientId": "{{CLIENT_ID}}",
+  "state": "Rejected",
+  "success": false,
+  "signatureLevel": "QES",
+  "provider": null,
+  "documentName": "Employment contract - Ivana Horvat.pdf",
+  "errorCode": "StandaloneIntegrationSignatureRejected",
+  "message": "I do not agree with clause 4",
+  "signedAt": null,
+  "finishedAt": "2026-11-24T10:02:51Z"
+}
+```
+
+When a request reaches its outcome, the Standalone Signer calls **one** of your URLs with the configured method, `Content-Type: application/json` and your `authorizationHeader` (if set).
+
+| Field | Description |
+|---|---|
+| `signatureRequestId` | The request. |
+| `externalReference` | Your reference from the create call. |
+| `clientId` | The API client that created the request (useful when several clients share one webhook). |
+| `state` | `Signed`, `Failed`, `Rejected` or `Expired`. |
+| `success` | `true` only for `Signed`. |
+| `signatureLevel`, `provider` | Level of the request and the provider used (if signing started). |
+| `documentName` | Your document name. |
+| `errorCode`, `message` | Error **name** and human-readable reason for unsuccessful outcomes. |
+| `signedAt`, `finishedAt` | When the document was signed / when the request reached its outcome. |
+
+**Delivery**
+
+* Any `2xx` response counts as delivered. Each attempt times out after 15 seconds.
+* Failed attempts are retried after 30 s, 60 s, 180 s and 300 s (5 attempts in total). After that the failure is recorded in the request's audit log and an operator can re-send the webhook.
+* Delivery is **at-least-once**: make your handler idempotent, keyed on `signatureRequestId`.
+* The webhook does not contain the PDF. Download it with [GET /integration/{id}/document](#download-the-document).
+* The webhook is not signed. Authenticate it with the `authorizationHeader` you set when creating the request and treat it as a trigger: confirm with [GET /integration/{id}](#get-a-signature-request) if in doubt.
+
+## Example webhook handler
+
+```shell
+# Simulate a webhook against your own endpoint
+curl -X POST "https://app.example.com/hooks/signature/signed" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer 6f1c0b4e9a2d…" \
+  -d '{"signatureRequestId":"3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11","state":"Signed","success":true}'
+```
+
+```csharp
+app.MapPost("/hooks/signature/{outcome}", async (string outcome, SignatureCallback payload,
+    HttpRequest request, DocumentStore store, StandaloneSignerClient signer) =>
+{
+    var document = await store.FindBySignatureRequestIdAsync(payload.SignatureRequestId);
+    if (document is null) return Results.NotFound();
+
+    // Authenticate with the per-request secret stored when the request was created.
+    if (!CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(request.Headers.Authorization.ToString()),
+            Encoding.UTF8.GetBytes($"Bearer {document.WebhookSecret}")))
+        return Results.Unauthorized();
+
+    if (document.Status is DocumentStatus.Signed or DocumentStatus.Failed)
+        return Results.Ok(); // idempotent: already processed
+
+    if (payload.Success)
+    {
+        var pdf = await signer.DownloadDocumentAsync(payload.SignatureRequestId);
+        await store.SaveSignedAsync(document, pdf);
+        await signer.DeleteDocumentAsync(payload.SignatureRequestId);
+    }
+    else
+    {
+        await store.MarkFailedAsync(document, payload.State, payload.ErrorCode, payload.Message);
+    }
+
+    return Results.Ok();
+});
+
+public record SignatureCallback(Guid SignatureRequestId, string? ExternalReference, string State,
+    bool Success, string? ErrorCode, string? Message);
+```
+
+```javascript
+// Express
+app.post('/hooks/signature/:outcome', express.json(), async (req, res) => {
+  const payload = req.body;
+  const doc = await store.findBySignatureRequestId(payload.signatureRequestId);
+  if (!doc) return res.sendStatus(404);
+  if (req.get('Authorization') !== `Bearer ${doc.webhookSecret}`) return res.sendStatus(401);
+  if (doc.status === 'signed' || doc.status === 'failed') return res.sendStatus(200); // idempotent
+
+  if (payload.success) {
+    const pdf = await signer.downloadDocument(payload.signatureRequestId);
+    await store.saveSigned(doc, pdf);
+    await signer.deleteDocument(payload.signatureRequestId);
+  } else {
+    await store.markFailed(doc, payload.state, payload.errorCode, payload.message);
+  }
+  res.sendStatus(200);
+});
+```
+
+Respond quickly with `2xx` and do slow work (downloads, notifications) after acknowledging if your platform allows it; the Standalone Signer waits at most 15 seconds per attempt.
+
+# Signing UI (JavaScript SDK)
+
+```html
+<div id="signer" style="height: 80vh"></div>
+<script src="https://{{SIGNER_HOST}}/sdk/signator-signer-sdk.js"></script>
+<script>
+  const signer = SignatorSigner.create({
+    container: '#signer',
+    backendUrl: 'https://{{SIGNER_HOST}}',
+    signatureToken: signatureTokenFromYourBackend,
+    locale: 'hr',
+    signatureText: { lineOne: 'Ivana Horvat', lineTwo: 'Employee' },
+    onSuccess: (result) => showThankYou(result.signatureRequestId),
+    onError: (result) => showError(result.state, result.errorCode, result.message),
+    onStatus: (status) => console.debug('signer status', status)
+  });
+</script>
+```
+
+The SDK is a single script served by the Standalone Signer. `SignatorSigner.create` embeds an iframe (served by the Standalone Signer) in your container and passes the configuration to it with `postMessage`, so the signature token never appears in a URL. Inside the frame the signer sees the PDF (zoom, paging), positions the signature if you asked for that, chooses the provider if several are allowed and signs. When the request settles, the SDK calls `onSuccess` or `onError` once and removes the iframe.
+
+The signing policy is not configured in the SDK: the SDK reads the level, the allowed providers and whether identification is allowed from the request your backend created.
+
+## SDK options
+
+| Option | Default | Description |
+|---|---|---|
+| `container` | required | Element or CSS selector. Give it an explicit height. |
+| `backendUrl` | required | `https://{{SIGNER_HOST}}` |
+| `signatureToken` | required | `signatureToken` from the create call. |
+| `onSuccess(result)` | required | Called once when the document is signed. |
+| `onError(result)` | required | Called once when signing failed, was rejected or expired, or the component could not start. |
+| `onStatus(status)` | — | Progress events (`{ status, kind }`, plus `consent-redirect` and `identification-redirect`). |
+| `locale` | browser language, else `en` | UI language: `en`, `hr`, `sl`, `de`, `fr`, `it`. |
+| `language` | `EN` | Language of the provider's consent page, where the provider supports it. |
+| `provider` | — | Preferred provider. Used without asking when the request allows it; otherwise ignored. |
+| `providerLabels` | — | Your own labels for the provider chooser, e.g. `{ FinaRiws: 'FINA (mobile)' }`. |
+| `signatureText` | — | `{ lineOne, lineTwo, lineThree, lineFour, useHandwrittenStyle }`: the signer positions a generated signature card. |
+| `signatureImage` | — | Base64 or data-URL image (PNG/JPEG) the signer positions. |
+| `signaturePosition` | centre of the first visible page | `{ page, x, y, width, height }` in PDF points (bottom-left origin): initial placement of the card or image. |
+| `allowReject` | `false` | Show a **Reject** button; the signer can decline with an optional reason. |
+| `mode` | `iframe` | `popup` opens the signer in a separate window instead of the container. |
+| `propagateErrors` | `true` | `false`: the SDK shows its own error dialog (with a support identifier) instead of calling `onError`. |
+| `successfulSignatureRedirect`, `unsuccessfulSignatureRedirect` | bundled pages | Pages the provider returns the signer to. Keep the defaults unless you host your own (see below). |
+| `pdfJsUrl`, `pdfWorkerUrl` | PDF.js 4.0.379 from cdnjs | Point to self-hosted copies for on-premise or strict-CSP deployments. |
+| `pollIntervalMs`, `pollMaxMs` | `2000`, `30000` | Status polling back-off. |
+| `frameUrl` | `{backendUrl}/sdk/signer-frame.html` | Override only for custom hosting. |
+| `debug` | `false` | Verbose logging; enables `onPosition` events with the placed coordinates. |
+
+Methods: `signer.destroy()` removes the component (e.g. when the user navigates away).
+
+<aside class="notice">
+Signature placement: if you pass <code>signatureText</code> or <code>signatureImage</code>, the signer positions the signature (<b>Position image</b> → drag/resize → <b>Sign</b>). Without them the signer only clicks <b>Sign</b> and the placement from the create request (or an invisible signature) is used.
+</aside>
+
+## Result object
+
+```json
+{
+  "signatureRequestId": "3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11",
+  "state": "Signed",
+  "success": true,
+  "errorCode": null,
+  "message": null,
+  "source": "postMessage"
+}
+```
+
+`onSuccess` and `onError` receive the same object. `state` is the request state when known (`Signed`, `Failed`, `Rejected`, `Expired`); `errorCode` is the error name, or `SDK_INIT_FAILED` when the component could not start.
+
+<aside class="warning">
+<code>onSuccess</code> is a UI signal for showing a confirmation. The authoritative outcome is the webhook to your backend (or <code>GET /integration/{id}</code>). Never mark a document as signed based only on a browser event.
+</aside>
+
+## What the signer experiences
+
+* **SES (seal):** **Sign** seals the document immediately; no provider page.
+* **QES/AES with one allowed provider:** **Sign** starts the provider directly.
+* **QES/AES with several providers:** **Sign** opens a chooser listing only the providers you allowed, in your order, with localized names (override with `providerLabels`).
+* **Provider consent:** the frame navigates to the provider's page (FINA mobile approval, Certilia, Swisscom, A-Trust login…). When the signer finishes, the provider returns to the redirect page, which notifies the SDK. Status polling is a fallback if that message is lost.
+* **Smart card / token (`LocalComponentV1`):** the consent page checks whether the ViziBit local component is running on the signer's computer and offers installers for Windows, macOS and Linux when it is missing or outdated.
+* **Identification:** when the request allows it, the chooser also offers **"I don't have a digital identity"** (see [Identification](#identification-of-signers-without-a-digital-identity)).
+* **Reject:** with `allowReject: true`, a **Reject** button asks for an optional reason; `onError` is then called with `state: "Rejected"`.
+* **Reopening:** if the request already reached an outcome, the SDK reports it immediately. If signing already started (e.g. the page was reloaded), the signer can continue at the provider instead of starting again.
+
+Some provider pages refuse to be displayed inside an iframe. If a provider page does not render in your container, use `mode: 'popup'`.
+
+## Languages
+
+The SDK UI is available in English (`en`), Croatian (`hr`), Slovenian (`sl`), German (`de`), French (`fr`) and Italian (`it`). Without `locale`, the browser language is used, falling back to English. The local component check page follows the browser language as well.
+
+## Hosting, CSP and redirects
+
+* Allow the Standalone Signer origin in your Content Security Policy for `script-src` and `frame-src`. The frame loads PDF.js from cdnjs unless you set `pdfJsUrl` and `pdfWorkerUrl`.
+* Keep the default redirect pages. If you host your own, they must `postMessage({ type: 'SIGNATOR_SIGNING_SUCCESS' })` or `postMessage({ type: 'SIGNATOR_SIGNING_ERROR', errorCode })` to `window.parent` and `window.opener`; their origin is trusted automatically.
+* The SDK needs no cookies. CORS is open on the Standalone Signer.
+* Mobile apps can host the SDK in a WebView that allows pop-ups/new windows for provider pages.
+
+# Signer endpoints
+
+These endpoints use the **signature token** and are what the SDK calls. You only need them if you build your own signing UI or sign server-side (seals).
+
+## Get the signing state
+
+```shell
+curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/state" \
+  -H "Authorization: Bearer $SIGNATURE_TOKEN"
+```
+
+> Response `200 OK`
+
+```json
+{
+  "signatureRequestId": "3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11",
+  "state": "WaitingForUserApproval",
+  "signatureLevel": "QES",
+  "providers": ["FinaRiws", "CertiliaSdurddV1", "LocalComponentV1"],
+  "provider": "CertiliaSdurddV1",
+  "identificationAllowed": false,
+  "documentName": "Employment contract - Ivana Horvat.pdf",
+  "consentUrl": "https://provider.example/consent/…",
+  "errorCode": null,
+  "message": null,
+  "expiresAt": "2026-12-31T23:00:00Z",
+  "documentDeletedAt": null
+}
+```
+
+`GET /v/1/signature/standalone/pdf/state` (also accepts `POST`)
+
+The policy the signing UI may offer plus progress. `consentUrl` appears a few seconds after a QES/AES signature was started. `externalReference` is deliberately not exposed to the signer.
+
+## Download the document for preview
+
+`GET /v/1/signature/standalone/pdf/download` (also accepts `POST`) — the current PDF.
+
+## Start signing
+
+```shell
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/init" \
+  -H "Authorization: Bearer $SIGNATURE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{ "provider": "CertiliaSdurddV1", "language": "HR" }'
+```
+
+`POST /v/1/signature/standalone/pdf/init` → `204`
+
+| Field | Description |
+|---|---|
+| `provider` | One of the request's `providers`. May be omitted when only one is allowed. Ignored for `SES`. |
+| `signatureImage` | Optional placement/appearance overriding the one from the create call. |
+| `language` | Provider consent-page language (default `EN`). |
+| `successfulSignatureRedirect`, `unsuccessfulSignatureRedirect` | Pages the provider returns to (the SDK sends its bundled pages). |
+
+Outcomes: for `SES` the document is sealed during the call (state `Signed`, webhook queued). For `QES`/`AES` the state becomes `WaitingForUserApproval` and `consentUrl` follows. Errors: `400` (`186`) provider required, `403` (`205`) provider not allowed for the request, `409` already started or finished, `410` document deleted.
+
+## Reject as the signer
+
+`POST /v/1/signature/standalone/pdf/reject` with `{ "reason": "…" }` (optional) → `204`.
+
+## Signing Service callback
+
+`POST /v/1/signature/standalone/pdf/digest_state` is called only by the ViziBit Signing Service to deliver the signed hash. It is authenticated with a token issued for that one signing ceremony; the signer's signature token is rejected there, so a signing UI cannot inject a signature of its own.
+
+## Start identification
+
+`POST /v/1/signature/standalone/pdf/identification` with `{ "returnUrl": "…", "language": "HR" }` (optional) → `200 { "redirectUrl": "…" }`. See [Identification](#identification-of-signers-without-a-digital-identity).
+
+# Organisation seals
+
+An organisation seal (`signatureLevel: "SES"`) is applied with the organisation's seal certificate, without any user interaction, for example an employer seal on confirmations and decisions, or on a contract after the employee signed.
+
+## How seals are provisioned
+
+1. **Certificate.** The organisation obtains an electronic seal certificate (a qualified seal certificate from a qualified trust service provider when the seal must have qualified status) as a PKCS#12 file. In the sandbox, ViziBit can assign a test seal.
+2. **Installation.** ViziBit installs the certificate in the ViziBit Signing Service under a seal id unique to the organisation (e.g. `acme-hr-seal`). The certificate never leaves the Signing Service.
+3. **Assignment.** The seal id is assigned to the organisation's API client (`sealIds`, see [Administration](#administration-api-clients)). A client can only use the seals assigned to it; administrators can use any seal.
+4. **Use.** The integration creates SES requests. If exactly one seal is assigned, `sealId` can be omitted.
+5. **Renewal.** Before the certificate expires, the new certificate is installed under the same seal id. Integrations do not change.
+6. **Withdrawal.** Removing the seal id from the client stops its use immediately.
+
+Treat seal ids as confidential configuration.
+
+## Seal without a user interface
+
+```shell
+# 1. create the request (as usual)
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" \
+  -d '{ "document": "JVBERi0x…", "signatureLevel": "SES", "sealId": "acme-hr-seal",
+        "callbacks": { "onSigned": "https://app.example.com/hooks/s", "onError": "https://app.example.com/hooks/e" } }'
+
+# 2. seal immediately with the returned signature token
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/init" \
+  -H "Authorization: Bearer $SIGNATURE_TOKEN" -H "Content-Type: application/json" -d '{}'
+
+# 3. download the sealed PDF
+curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/$SIGNATURE_REQUEST_ID/document" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -o sealed.pdf
+```
+
+Your backend can seal documents on its own: create the request and immediately call [Start signing](#start-signing) with the returned signature token and an empty body (optionally with a `signatureImage` for a visible seal). When the call returns `204` the document is sealed; download it right away. The webhook follows as usual.
+
+# Identification of signers without a digital identity
+
+<aside class="warning">
+Preview: the request flag and the signing-UI entry point are available; the identification service itself is being integrated. Until it is enabled, starting identification returns <code>501</code> and the SDK tells the signer to use one of the offered signing methods.
+</aside>
+
+Signers who do not have a digital identity yet (no certificate with any offered provider) can be identified remotely once and then sign. You decide per request whether this is offered:
+
+* Create the request with `"allowIdentification": true` (QES or AES).
+* The SDK then shows **"I don't have a digital identity"** in the provider chooser.
+* The SDK calls `POST /pdf/identification`; when identification is available the response contains a `redirectUrl` to which the signer is sent; after identification the signer returns and signs.
+* Requests without the flag answer `403`. Requests that already finished answer `409`.
+
+No integration change is needed when identification becomes available.
+
+# Errors
+
+> Error response (RFC 7807 problem details)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Bad Request",
+  "status": 400,
+  "errorCode": 53,
+  "errorMessage": "Provider FinaRiws does not support AES. Supported for AES: LocalComponentV1, SwisscomEtsiV1",
+  "additionalInformation": null
+}
+```
+
+Errors are returned as problem details with three extra fields: `errorCode` (number), `errorMessage` (human-readable) and `additionalInformation`. Branch on `errorCode`. Malformed JSON is rejected with `400` and an `errorMessage` but no `errorCode`.
+
+In webhooks and in `/pdf/state` the same errors appear by **name** (e.g. `"StandaloneIntegrationSignatureRejected"`).
+
+| Code | Name | HTTP | When |
+|---|---|---|---|
+| 135 | `ErrorContentIsEmpty` | 400 | `document` missing or empty |
+| 30014 | `StandaloneIntegrationRequestDocumentIsNotAPdf` | 400 | `document` is not a PDF |
+| 30007 | `StandaloneIntegrationRequestOnSignedCallbackMustBeDefined` | 400 | `callbacks.onSigned` missing |
+| 30006 | `StandaloneIntegrationRequestOnErrorCallbackMustBeDefined` | 400 | `callbacks.onError` missing |
+| 30009 | `StandaloneIntegrationRequestExpiresAtNotValid` | 400 | `expiresAt` in the past or too far ahead |
+| 275 | `BadRequest` | 400 | Other validation errors: level, phone number, jurisdiction, callback URL or method, field lengths, invalid usage range |
+| 186 | `SignatureProviderNotDefined` | 400 | Providers missing or unknown; provider must be chosen |
+| 53 | `UnsupportedSignatureMethod` | 400 | Provider does not support the requested level |
+| 205 | `ForbiddenAccessMissingPermissions` | 403 | Seal not assigned to your client; provider not allowed for the request; identification not allowed |
+| 30019 | `StandaloneIntegrationUnauthorized` | 401 / 403 | Missing or wrong token type; managing another client |
+| 84 | `EntityNotFound` | 404 | Request does not exist or belongs to another client |
+| 30018 | `StandaloneIntegrationInvalidState` | 409 | Action not possible in the current state |
+| 183 | `LiteWorkflowActionAlreadyCompleted` | 409 | Document already signed |
+| 30016 | `StandaloneIntegrationDocumentDeleted` | 410 | Document already deleted |
+| 28 | `CouldNotStartIdentification` | 501 | Identification not available yet |
+| 63 | `UnhandledSigningException` | webhook | Provider or signing failure (see `message`) |
+| 30003 | `StandaloneIntegrationSignatureRejected` | webhook | Rejected by the signer or by your backend |
+| 30004 | `StandaloneIntegrationSignatureWorkflowExpired` | webhook | Expired before it was signed |
+
+# Implementation guide
+
+## Backend: create
+
+1. Obtain and cache an access token.
+2. Generate a random webhook secret for the document.
+3. Create the signature request with the PDF, your `externalReference`, the signing policy, the webhook URLs, `callbacks.authorizationHeader: "Bearer <secret>"`, an `expiresAt` that fits the use case and, if you want a fixed position, `signatureImage`.
+4. Store `signatureRequestId`, `signatureToken`, the secret and `expiresAt` with your document and mark it as *waiting for signature*.
+
+## Frontend: sign
+
+1. When the signer opens the document, your frontend asks **your** backend for the signature token. Return it only to the person who is supposed to sign.
+2. Mount the SDK with the token. Pass `signatureText` (or `signatureImage`) if the signer should place the signature, `locale` for the UI language, and `allowReject` if the signer may decline.
+3. On `onSuccess`, show a confirmation and refresh your view from your backend. On `onError`, show the message; to retry after `Failed`, `Rejected` or `Expired`, create a new request.
+
+## Backend: complete
+
+1. Receive the webhook, check the `Authorization` header against the stored secret and look up the document by `signatureRequestId` (idempotently).
+2. On `success: true`: download the signed PDF, store it and, optionally, validate it (for legally important documents, verify that the signature is qualified and that the signer's certificate belongs to the expected person — the Standalone Signer does not check who signed). Then delete the stored copy.
+3. On `success: false`: record `state`, `errorCode` and `message`.
+4. Safety net: periodically check requests still waiting close to `expiresAt` with `GET /integration/{id}` in case a webhook was lost.
+
+## Several signatures on one document
+
+One request yields one signature; signatures are added as PDF incremental updates, so earlier signatures stay valid. For *employer signs → employee signs → employer seal*, create the next request with the PDF downloaded from the previous one (with a different signature position). Your application owns the order, reminders, deadlines and signer replacement.
+
+## Choosing expiresAt
+
+`expiresAt` bounds how long the signer has, how long the signature token works and how long the Standalone Signer keeps the PDF. Typical values: a few hours for in-session signing, 7–14 days for documents sent to employees or customers.
+
+## Security checklist
+
+* Client secret only on the backend, in a secret store; rotate it periodically.
+* Signature token handed only to the intended signer.
+* Webhook authenticated with a per-request `authorizationHeader`; handler idempotent.
+* Success acted upon only after the webhook or `GET /integration/{id}`, never on a browser event alone.
+* Signed PDF downloaded promptly and the stored copy deleted.
+* The signing policy (level, providers, seal) is fixed by your backend; the signing UI cannot weaken it.
+* Where it matters legally, validate the signed PDF (signature level and signer identity).
+
+## Go-live checklist
+
+* Production credentials stored; sandbox credentials removed from production configuration.
+* Content Security Policy updated for the production Standalone Signer host.
+* Webhook endpoint reachable from the Standalone Signer and monitored.
+* Monitoring for requests stuck in *waiting for signature* and for webhook failures.
+* Test matrix passed in the sandbox:
+  * every provider you offer, at every level you use; visible card, your own image and invisible signature;
+  * SES with your seal (visible and invisible);
+  * signer cancels at the provider → error webhook; **Reject** → `Rejected`; short `expiresAt` → `Expired`;
+  * webhook endpoint down → retries → operator re-send;
+  * duplicate webhook delivery handled;
+  * download after `expiresAt` handled gracefully (`401`/`410`);
+  * every UI language you support; provider pages render in iframe mode (otherwise use `mode: 'popup'`).
+
+# Testing
+
+## Sandbox
+
+ViziBit provides a sandbox host and an API client per integration team, tells you which provider test accounts are available there and, if you need organisation seals, assigns a test seal to your client.
+
+## SDK test harness
+
+`https://{{SIGNER_HOST}}/sdk-test.html` runs the complete flow against the host it is served from:
+
+1. **Sign in** with your API client (`client_id` / `client_secret`).
+2. **Signature request (your backend):** level, allowed providers, jurisdiction, signer phone number, identification, seal id, external reference, document name and expiry. This is exactly what your backend would send.
+3. **SDK options (signing UI):** UI language, preferred provider, provider language, **Reject** button, error propagation.
+4. **Signature:** generated card, uploaded image or none, plus an optional initial position (PDF points).
+5. **Run** creates a request with a sample PDF and mounts the SDK in an iframe; **Open in window** uses a popup; **Destroy instance** unmounts it.
+6. **Use existing token…** mounts the SDK with a signature token created by **your own backend** — the fastest way to test your backend integration before your frontend exists.
+7. The **activity log** shows every HTTP call, status event, placement event and callback. After success, **Download signed PDF** fetches the result.
+
+<aside class="notice">
+The harness creates requests with callback URLs pointing to the Standalone Signer itself. On hosts where those development receivers are disabled the webhook delivery is reported as failed in the audit log; signing is not affected. Use your own webhook endpoint (or "Use existing token…") to test webhooks.
+</aside>
+
+## Dashboard
+
+`https://{{SIGNER_HOST}}/` lists your signature requests (filter by state or text: id, external reference, document name, provider…). The detail view shows the signing policy, the provider used, timestamps, webhook configuration and the full **audit log** of every state change, webhook attempt and error. The **support identifier** shown in the SDK error dialog is the `signatureRequestId`: search for it here. Administrators can re-send webhooks, force-expire stuck requests and delete stored documents.
+
+## Running the Standalone Signer locally
+
+For platform and partner developers who build on the Standalone Signer itself:
+
+1. Start PostgreSQL: `docker run -d -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16-alpine`.
+2. Run the service with the *Standalone Signer (Development)* profile (`http://localhost:5080`). The schema is created automatically and a development administrator client is created with credentials shown to the local test pages.
+3. Create, preview, position, reject, state, download, dashboard and administration work without further setup.
+4. Seals need `SigningServiceClientSettings:SigningServiceBaseUrl` pointing at a Signing Service with the seal installed.
+5. QES/AES additionally need the Signing Service to reach your `StandaloneSignerBackendUrl` (it posts the signed hash to `/pdf/digest_state`); for a cloud Signing Service use a public tunnel to your machine, or test against the sandbox.
+
+# Operations and on-premise deployment
+
+## Components
+
+| Component | Notes |
+|---|---|
+| Standalone Signer container | One image (.NET 8, HTTP port 80) containing the API, SDK, dashboard and admin pages. |
+| PostgreSQL | Requests and audit log, API clients (OpenIddict), background jobs (Hangfire) and message queue (Rebus). Schemas are created and upgraded automatically at start-up. |
+| Document storage | Folder on a persistent volume; documents are stored AES-encrypted. |
+| TLS termination | Reverse proxy or ingress in front of the container. |
+| ViziBit Signing Service | Every signature and seal is executed by ViziBit's Signing Service, which talks to the providers. Only document hashes are exchanged. |
+
+## Network requirements
+
+| Direction | From → to | Purpose |
+|---|---|---|
+| Outbound HTTPS | Standalone Signer → ViziBit Signing Service | Every signature and seal. |
+| **Inbound HTTPS** | ViziBit Signing Service → Standalone Signer `/v/1/signature/standalone/pdf/digest_state` | **Required for QES/AES:** the Signing Service delivers the signed hash to `StandaloneSignerBackendUrl`. |
+| Inbound HTTPS | Signers' browsers → Standalone Signer | SDK, document preview, signing. |
+| Outbound HTTPS | Standalone Signer → your webhook endpoints | Webhooks. |
+| Outbound HTTPS (browser) | Signers' browsers → cdnjs.cloudflare.com | PDF.js, unless self-hosted (`pdfJsUrl`, `pdfWorkerUrl`). |
+
+<aside class="warning">
+The inbound connection from the ViziBit Signing Service is a current requirement for QES/AES signatures. A mode in which the Standalone Signer retrieves the signed hash itself (no inbound connection) is planned and not yet implemented.
+</aside>
+
+## Configuration
+
+Settings use standard ASP.NET configuration; as environment variables, replace `:` with `__`.
+
+| Setting | Purpose |
+|---|---|
+| `ConnectionStrings:Default` (or `ConnectionStrings:StandaloneSigner`) | PostgreSQL connection. |
+| `RebusSettings:DatabaseConnectionString`, `RebusSettings:InputQueueName` | Message queue (normally the same database; queue `signator-standalone-signer-integration`). |
+| `Hangfire:ConnectionString`, `Hangfire:SchemaName` | Background jobs. |
+| `Hangfire:QesSigningWorkerCount` | Parallel QES/AES ceremonies on this instance (default 20). `0` disables QES/AES processing on the instance (see multi-instance). |
+| `Hangfire:CallbackWorkerCount`, `Hangfire:ExpirationSweepCron` | Webhook workers (default 10) and expiry sweep schedule (default every 5 minutes). |
+| `StandaloneSignerIntegrationSettings:StandaloneSignerBackendUrl` | Public URL of this installation, reachable by the Signing Service. |
+| `StandaloneSignerIntegrationSettings:DefaultExpirationDays`, `MaxExpirationDays` | Default (2) and maximum (90) request lifetime. |
+| `StandaloneSignerIntegrationSettings:UsageClientIdPrefix` | Installation identifier prefixed to client ids in usage reporting (`{prefix}:{clientId}`). ViziBit assigns one per on-premise installation. |
+| `StandaloneSignerIntegrationSettings:LocalDocumentStorage:StoragePath`, `EncryptionKey`, `EncryptionSecret` | Document folder and its encryption keys (identical on all instances). |
+| `SigningServiceClientSettings:SigningServiceBaseUrl` | ViziBit Signing Service URL. |
+| `TimestampService:Server` | Timestamp authority used for signatures. |
+| `QesSigning:SignaturePollDurationMinutes` | How long a QES/AES ceremony may wait for the signer (default 90). |
+| `IntegrationCallbacks:RetryDelaysSeconds`, `IntegrationCallbacks:TimeoutMilliseconds` | Webhook retry schedule (default 30, 60, 180, 300) and timeout (15000). |
+| `LocalJwt:SecretKey` | Key that signs signature tokens. Long random value, identical on all instances. |
+| `OpenIddict:DefaultAdmin:ClientId`, `ClientSecret`, `DisplayName` | Administrator client created at first start; rotate its secret immediately. |
+| `OpenIddict:SigningCertificate`, `OpenIddict:EncryptionCertificate` (+ `…Password`) | Certificates for access tokens (identical on all instances). Without them, tokens become invalid on restart. |
+
+## Running more than one instance
+
+A single instance (with a standby that takes over on failure) is the standard installation. To run several active instances behind a load balancer:
+
+1. **One database** for all instances.
+2. **Shared document folder.** Mount the same volume (e.g. NFS or SMB) at `LocalDocumentStorage:StoragePath` on every instance, with the same encryption keys. Any instance can then serve any document, run seals and run the expiry sweep.
+3. **Same keys everywhere:** `LocalJwt:SecretKey` and the OpenIddict certificates, so tokens issued by one instance are accepted by the others.
+4. **One instance processes QES/AES ceremonies.** The signed hash is handed from the `/pdf/digest_state` call to the waiting ceremony in that instance's memory. Set `Hangfire:QesSigningWorkerCount` to `0` on every other instance and configure the proxy to route `/v/1/signature/standalone/pdf/digest_state` always to the processing instance.
+5. **Sticky routing (optional).** A proxy that keeps a caller on the same instance (for example by hashing the `Authorization` header — the browser and the Signing Service send the same signature token for a request) reduces cross-instance traffic. It does not replace steps 2 and 4: the backend creates requests with its own access token, so a request's calls come from different callers.
+
+A shared cache that removes step 4 is planned.
+
+## Data retention
+
+* **Documents** are stored encrypted and deleted when you delete them or when `expiresAt` passes, whichever comes first.
+* **Signer phone numbers** are cleared from the request as soon as signing starts or the request reaches an outcome. The background job that runs a ceremony keeps its copy until the job record expires (24 hours after completion).
+* **Request records** (state, policy, external reference, audit log; no document content) are kept for support and usage reporting.
+
+## Upgrade notes
+
+When upgrading an installation that used the earlier API (signing policy chosen in the signing UI):
+
+* The database schema is migrated automatically at start-up, including the signing time of requests that were already signed.
+* Requests created with the earlier API and not yet signed cannot be signed after the upgrade; they expire within their normal lifetime. Create new requests.
+* API clients must have their seals assigned (`sealIds`) before they can create `SES` requests.
+* Signing ceremonies running during the upgrade may fail and need to be repeated.
+
+## Monitoring and support
+
+* `GET /v/1/signature/health/basic` (liveness) and `/health/ready` (database).
+* Every request has an audit log (dashboard) with each state change, webhook attempt and error; the SDK shows signers a support identifier (the `signatureRequestId`).
+* Administrators can re-send webhooks (`POST /dashboard/requests/{id}/retry-callback`) and force-expire stuck requests (`POST /dashboard/requests/{id}/expire`).
+* Provider availability (FINA, AKD/Certilia, Swisscom, A-Trust) is outside the Standalone Signer; provider errors are reported in the webhook `message` and the audit log.
+
+# Administration (API clients)
+
+Administrator access tokens can manage API clients; every client can read and rotate its own record. The same functions are available in `https://{{SIGNER_HOST}}/admin.html`.
+
+```shell
+# Create a client with a partner and an assigned seal (admin)
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/admin/clients" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+  -d '{ "clientId": "acme-hr", "displayName": "ACME HR", "partner": "acme-partner", "sealIds": ["acme-hr-seal"] }'
+
+# Change partner or seals (admin); omitted fields stay unchanged, [] removes all seals
+curl -X PATCH "https://{{SIGNER_HOST}}/v/1/signature/standalone/admin/clients/acme-hr" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+  -d '{ "sealIds": ["acme-hr-seal", "acme-board-seal"] }'
+
+# Rotate your own secret
+curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/admin/clients/{{CLIENT_ID}}/rotate-secret" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" -d '{}'
+```
+
+| Endpoint | Access | Purpose |
+|---|---|---|
+| `GET /admin/clients` | admin | List clients. |
+| `GET /admin/clients/me` | any client | Your own record. |
+| `GET /admin/clients/{clientId}` | own record or admin | One client. |
+| `POST /admin/clients` | admin | Create a client: `clientId`, `displayName`, optional `clientSecret` (generated if omitted), `isAdmin`, `partner`, `sealIds`. The secret is returned once. |
+| `PATCH /admin/clients/{clientId}` | admin | Change `displayName`, `partner` (`""` clears) and `sealIds` (`[]` clears). |
+| `POST /admin/clients/{clientId}/rotate-secret` | own record or admin | New secret (optional `newClientSecret`), returned once. Partner and seals are kept. |
+| `DELETE /admin/clients/{clientId}` | admin | Revoke a client. |
+
+Client records contain `clientId`, `displayName`, `isAdmin`, `partner` and `sealIds`. `partner` groups the usage of several clients (for example all customers of one partner); `sealIds` are the seals the client may apply.
