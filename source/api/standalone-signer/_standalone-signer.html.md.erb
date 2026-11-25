@@ -76,22 +76,7 @@ For providers that read the certificate from the signer's own device (<code>Loca
 
 # Integration flow
 
-```text
- Your backend            Your frontend + SDK          Standalone Signer          Provider
- ------------            -------------------          -----------------          --------
- 1  POST /connect/token  ─────────────────────────────▶ access_token
- 2  POST /integration    ─────────────────────────────▶ { signatureRequestId,
-    (PDF, policy, webhooks)                               signatureToken }
- 3  hand signatureToken ─▶ SignatorSigner.create(...)
- 4                         GET /pdf/state, /pdf/download ▶ policy + PDF preview
- 5                         signer clicks "Sign" (chooses provider if several)
- 6                         POST /pdf/init ───────────────▶ QES/AES: hash ───────────▶ consent page
- 7                         (SDK sends signer to the provider, signer approves)     ◀─ signed hash
- 8                                                        embed signature + timestamp
- 9  ◀──────────────────────────────────────── webhook { state: "Signed", ... }
-10  GET /integration/{id}/document ────────────────────▶ signed PDF
-11  DELETE /integration/{id}/document (optional)
-```
+![Standalone Signer integration flow](images/standalone_signer_flow.png)
 
 1. Your backend obtains an access token with its client credentials.
 2. Your backend creates a signature request with the PDF, the signing policy and the webhook URLs, and stores the returned `signatureRequestId` and `signatureToken` with its own document.
@@ -117,16 +102,7 @@ For providers that read the certificate from the signer's own device (<code>Loca
 | `Rejected` | The signer or your backend rejected the request. | yes |
 | `Expired` | `expiresAt` passed before the request was signed. | yes |
 
-```text
-                    POST /pdf/init (SES)
- Initialized ──────────────────────────────────────────────▶ Signed ──▶ Finished
-     │  POST /pdf/init (QES/AES)                                ▲
-     ▼                                                          │ provider signed
- WaitingForUserApproval ────────────────────────────────────────┘
-     │  provider error / timeout ─▶ Failed
-     │  reject (signer or backend) ─▶ Rejected
-     └─ expiresAt passed ─▶ Expired   (also from Initialized)
-```
+![Request states](images/standalone_signer_states.png)
 
 * A QES/AES ceremony waits up to 90 minutes for the signer at the provider and then fails.
 * A request reaches exactly one outcome. Late or duplicate provider results after that are ignored.
