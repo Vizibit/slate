@@ -1,6 +1,6 @@
 # Introduction
 
-The **Standalone Signer** lets any application add qualified (QES), advanced (AdES) or organisation-seal signatures to PDF documents with one backend call, one embeddable signing component and one webhook. You do not integrate trust service providers, identification, PAdES, certificates or timestamping: the Standalone Signer and the ViziBit Signing Service handle all of that.
+The **Standalone Signer** lets any application add qualified (QES) or advanced (AdES) signatures and electronic seals to PDF documents with one backend call, one embeddable signing component and one webhook. You do not integrate trust service providers, identification, PAdES, certificates or timestamping: the Standalone Signer and the ViziBit Signing Service handle all of that.
 
 This guide is the starting point for every integration of the Standalone Signer. It is written for partners integrating the service into their products and for ViziBit teams building or supporting integrations.
 
@@ -42,7 +42,7 @@ Other useful URLs on every host:
 
 | Concept | Meaning |
 |---|---|
-| **API client** | Your application's identity: `client_id` and `client_secret`. Used only by your **backend**. Each client sees only its own signature requests. A client can belong to a **partner** (used to aggregate usage) and can have **seals** assigned to it. |
+| **API client** | Your application's identity: `client_id` and `client_secret`. Used only by your **backend**. Each client sees only its own signature requests. A client can belong to a **partner** (used to aggregate usage) and can have its organisation's **seals** assigned to it; the ViziBit electronic seal is available to every client. |
 | **Access token** | OAuth2 bearer token obtained with the client credentials (valid 1 hour). Authorises the backend endpoints. |
 | **Signature request** | One PDF waiting for one signature, identified by `signatureRequestId`. It carries the **signing policy** you defined: level, allowed providers, jurisdiction, seal, signer phone number and whether identification is allowed. |
 | **Signature token** | JWT returned when a request is created. It is scoped to that one request and valid until the request expires. It authorises the signing UI (preview, sign, reject, status) for that document only, so it is safe to hand to the signer's browser. |
@@ -57,7 +57,7 @@ The level and the providers the signer may use are decided by **your backend** w
 |---|---|---|
 | `QES` | Qualified electronic signature (legal equivalent of a handwritten signature in the EU) | `FinaRiws`, `CertiliaSdurddV1`, `CertiliaCommercialV1`, `LocalComponentV1`, `SwisscomEtsiV1`, `ATrustCscV1` |
 | `AES` | Advanced electronic signature | `SwisscomEtsiV1`, `LocalComponentV1` |
-| `SES` | Organisation seal (PKCS#12 seal held by the Signing Service), applied without user interaction | none — the seal is selected with `sealId` |
+| `SES` | Electronic seal applied without user interaction: the ViziBit electronic seal or your organisation's seal (see [Electronic seals](#electronic-seals)) | none — the seal is selected with `sealId` |
 
 | Provider | What the signer uses | Notes |
 |---|---|---|
@@ -311,7 +311,7 @@ const { signatureRequestId, signatureToken } = await res.json();
 | `signatureLevel` | string | yes | `QES`, `AES` or `SES`. |
 | `providers` | string[] | QES/AES | Providers the signer may use, in the order they are offered. See [Signature levels and providers](#signature-levels-and-providers). Not allowed for `SES`. |
 | `jurisdiction` | string | no | `EIDAS` (default) or `ZERTES`. `ZERTES` (Swiss law) requires `SwisscomEtsiV1` as the only provider. Not used for `SES`. |
-| `sealId` | string | SES | Seal to apply. May be omitted when exactly one seal is assigned to your API client. Must be a seal assigned to your client. Not allowed for QES/AES. |
+| `sealId` | string | no | Seal to apply (SES only): `Generic` for the ViziBit electronic seal, available to every API client, or a seal assigned to your client. When omitted: your client's seal if exactly one is assigned, otherwise `Generic` if none is assigned; required when several are assigned. See [Electronic seals](#electronic-seals). Not allowed for QES/AES. |
 | `signer.phoneNumber` | string | for `FinaRiws` | The signer's mobile number in international format (e.g. `+385911234567`; spaces, dashes and parentheses are removed). Required when `FinaRiws` is allowed; optional login hint for `SwisscomEtsiV1`. Ignored when no allowed provider uses it, and kept only until signing starts. |
 | `allowIdentification` | boolean | no | Lets a signer without a digital identity start remote identification from the signing UI. QES/AES only. See [Identification](#identification-of-signers-without-a-digital-identity). |
 | `signatureImage` | object | no | Position and appearance of the visible signature. With a position, the signer sees it there as soon as the document opens. See [Signature appearance](#signature-appearance). Without it the signature is invisible unless the signer places one. |
@@ -335,7 +335,7 @@ Store `signatureRequestId`, `signatureToken`, your webhook secret and `expiresAt
 * Unknown providers, or providers not available in the Standalone Signer, return `400` with `errorCode` `186`.
 * `FinaRiws` requires `signer.phoneNumber`.
 * `ZERTES` is only possible when `SwisscomEtsiV1` is the only provider; `SES` takes no jurisdiction.
-* `SES` uses a seal assigned to your API client: a seal that is not assigned returns `403` (`errorCode` `205`); if no seal is assigned to the client, `403` as well.
+* `SES` uses the ViziBit electronic seal (`Generic`) or a seal assigned to your API client. Any other seal returns `403` (`errorCode` `205`); omitting `sealId` while several seals are assigned returns `400` (`errorCode` `275`).
 * `allowIdentification` is rejected for `SES`.
 * Everything in the policy is fixed when the request is created. The signing UI may only choose one of `providers`.
 
@@ -831,20 +831,36 @@ Outcomes: for `SES` the document is sealed during the call (state `Signed`, webh
 
 `POST /v/1/signature/standalone/pdf/identification` with `{ "returnUrl": "…", "language": "HR" }` (optional) → `200 { "redirectUrl": "…" }`. See [Identification](#identification-of-signers-without-a-digital-identity).
 
-# Organisation seals
+# Electronic seals
 
-An organisation seal (`signatureLevel: "SES"`) is applied with the organisation's seal certificate, without any user interaction, for example an employer seal on confirmations and decisions, or on a contract after the employee signed.
+An electronic seal (`signatureLevel: "SES"`) is applied by the ViziBit Signing Service with a seal certificate, without any user interaction. Two kinds of seal are available:
 
-## How seals are provisioned
+| Seal | `sealId` | The seal certificate names | Typical use |
+|---|---|---|---|
+| **ViziBit electronic seal** | `Generic` | ViziBit | Protects the document against changes and shows that it was sealed through the ViziBit platform, e.g. on confirmations, receipts and protocols. Available to every API client without setup. |
+| **Your organisation's seal** | assigned by ViziBit, e.g. `acme-hr-seal` | Your organisation | Documents that must carry your organisation's seal, e.g. an employer seal on confirmations and decisions, or on a contract after the employee signed. |
+
+Which seal is applied:
+
+* With `sealId`: that seal, if your client may use it (`Generic` or a seal assigned to your client); otherwise `403` (`errorCode` `205`).
+* Without `sealId`: the seal assigned to your client if exactly one is assigned; `Generic` if none is assigned; `400` (`errorCode` `275`) if several are assigned.
+
+The applied seal is returned as `sealId` in the create response and in the [request details](#get-a-signature-request), and is shown on the dashboard.
+
+<aside class="notice">
+When a document must carry your organisation's seal, always send its <code>sealId</code>. A request without <code>sealId</code> is sealed with the ViziBit seal whenever no seal is assigned to your client at that moment, for example after your seal was withdrawn.
+</aside>
+
+## How organisation seals are provisioned
 
 1. **Certificate.** The organisation obtains an electronic seal certificate (a qualified seal certificate from a qualified trust service provider when the seal must have qualified status) as a PKCS#12 file. In the sandbox, ViziBit can assign a test seal.
 2. **Installation.** ViziBit installs the certificate in the ViziBit Signing Service under a seal id unique to the organisation (e.g. `acme-hr-seal`). The certificate never leaves the Signing Service.
-3. **Assignment.** The seal id is assigned to the organisation's API client (`sealIds`, see [Administration](#administration-api-clients)). A client can only use the seals assigned to it; administrators can use any seal.
-4. **Use.** The integration creates SES requests. If exactly one seal is assigned, `sealId` can be omitted.
+3. **Assignment.** The seal id is assigned to the organisation's API client (`sealIds`, see [Administration](#administration-api-clients)). A client can only use the seals assigned to it and the ViziBit seal; administrators can use any seal.
+4. **Use.** The integration creates SES requests with the seal id.
 5. **Renewal.** Before the certificate expires, the new certificate is installed under the same seal id. Integrations do not change.
-6. **Withdrawal.** Removing the seal id from the client stops its use immediately.
+6. **Withdrawal.** Removing the seal id from the client stops its use immediately: requests that name it return `403`.
 
-Treat seal ids as confidential.
+Treat seal ids of organisation seals as confidential.
 
 ## Seal without a user interface
 
@@ -910,7 +926,7 @@ In webhooks and in `/pdf/state` the same errors appear by **name** (e.g. `"Stand
 | 275 | `BadRequest` | 400 | Other validation errors: level, phone number, jurisdiction, callback URL or method, field lengths, invalid usage range |
 | 186 | `SignatureProviderNotDefined` | 400 | Providers missing or unknown; provider must be chosen |
 | 53 | `UnsupportedSignatureMethod` | 400 | Provider does not support the requested level |
-| 205 | `ForbiddenAccessMissingPermissions` | 403 | Seal not assigned to your client; provider not allowed for the request; signature position locked; identification not allowed |
+| 205 | `ForbiddenAccessMissingPermissions` | 403 | Seal that is neither `Generic` nor assigned to your client; provider not allowed for the request; signature position locked; identification not allowed |
 | 30019 | `StandaloneIntegrationUnauthorized` | 401 / 403 | Missing or wrong token type; managing another client |
 | 84 | `EntityNotFound` | 404 | Request does not exist or belongs to another client |
 | 30018 | `StandaloneIntegrationInvalidState` | 409 | Action not possible in the current state |
@@ -969,7 +985,7 @@ One request yields one signature; signatures are added as PDF incremental update
 * Monitoring for requests stuck in *waiting for signature* and for webhook failures.
 * Test matrix passed in the sandbox:
   * every provider you offer, at every level you use; visible card, your own image and invisible signature;
-  * SES with your seal (visible and invisible);
+  * SES with every seal you use (`Generic` and/or your organisation's seal), visible and invisible;
   * signer cancels at the provider → error webhook; **Reject** → `Rejected`; short `expiresAt` → `Expired`;
   * webhook endpoint down → retries → operator re-send;
   * duplicate webhook delivery handled;
@@ -980,7 +996,7 @@ One request yields one signature; signatures are added as PDF incremental update
 
 ## Sandbox
 
-ViziBit provides a sandbox host and an API client per integration team, tells you which provider test accounts are available there and, if you need organisation seals, assigns a test seal to your client.
+ViziBit provides a sandbox host and an API client per integration team and tells you which provider test accounts are available there. The ViziBit electronic seal (`Generic`) works in the sandbox without setup; if you need your organisation's seal, ViziBit assigns a test seal to your client.
 
 ## SDK test harness
 
@@ -1061,4 +1077,4 @@ curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/admin/clients/{{C
 | `POST /admin/clients/{clientId}/rotate-secret` | own record or admin | New secret (optional `newClientSecret`), returned once. Partner and seals are kept. |
 | `DELETE /admin/clients/{clientId}` | admin | Revoke a client. |
 
-Client records contain `clientId`, `displayName`, `isAdmin`, `partner` and `sealIds`. `partner` groups the usage of several clients (for example all customers of one partner); `sealIds` are the seals the client may apply.
+Client records contain `clientId`, `displayName`, `isAdmin`, `partner` and `sealIds`. `partner` groups the usage of several clients (for example all customers of one partner); `sealIds` are the organisation seals the client may apply; the ViziBit electronic seal (`Generic`) needs no assignment.
