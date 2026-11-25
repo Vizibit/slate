@@ -13,7 +13,7 @@ This guide is the starting point for every integration of the Standalone Signer.
 **What the Standalone Signer does not do:** it does not orchestrate multi-party workflows (signing order, signer replacement, reminders, escalations). One signature request produces one signature. Your application chains requests when a document needs several signatures (see [Several signatures on one document](#several-signatures-on-one-document)).
 
 <aside class="notice">
-The base URL of your environment and your API credentials (<code>client_id</code> / <code>client_secret</code>) are provided by ViziBit for each integration team. In this guide they appear as the placeholders <code>{{SIGNER_HOST}}</code>, <code>{{CLIENT_ID}}</code> and <code>{{CLIENT_SECRET}}</code>.
+Your API credentials (<code>client_id</code> / <code>client_secret</code>) are provided by ViziBit for each integration team. Use the demo host below for development and testing; production and on-premise hosts are provided for each integration.
 </aside>
 
 ## Base URL and environments
@@ -22,21 +22,21 @@ All API endpoints share the prefix `/v/1/signature/standalone` on the Standalone
 
 | Environment | Base URL | Notes |
 |---|---|---|
-| Sandbox | `https://{{SIGNER_HOST}}/v/1/signature/standalone` | Provided with your sandbox credentials. Use it for development and testing. |
-| Production (cloud) | `https://{{SIGNER_HOST}}/v/1/signature/standalone` | Provided when you go live. |
+| Demo / testing | `https://standalone-signer-demo.signator.eu/v/1/signature/standalone` | Use with your demo credentials for development and testing. |
+| Production (cloud) | `https://standalone-signer-demo.signator.eu/v/1/signature/standalone` | Provided when you go live. |
 | On-premise | defined by your installation | Same API. See [On-premise installations](#on-premise-installations). |
 
-Other useful URLs on every host:
+Other useful URLs on the demo host:
 
 | URL | Purpose |
 |---|---|
-| `https://{{SIGNER_HOST}}/v/1/signature/standalone/swagger` | Swagger UI / OpenAPI description |
-| `https://{{SIGNER_HOST}}/v/1/signature/standalone/health/basic` | Liveness |
-| `https://{{SIGNER_HOST}}/v/1/signature/standalone/health/ready` | Readiness |
-| `https://{{SIGNER_HOST}}/signature/standalone/sdk/signator-signer-sdk.js` | JavaScript SDK |
-| [`https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html) | SDK test harness (see [Try the flows](#try-the-flows)) |
-| `https://{{SIGNER_HOST}}/signature/standalone/sdk/sign.html` | [Hosted signing page](#hosted-signing-page), where the signer finishes after identification |
-| [`https://{{SIGNER_HOST}}/signature/standalone/`](https://{{SIGNER_HOST}}/signature/standalone/) | Signature request dashboard (sign in with your API client) |
+| `https://standalone-signer-demo.signator.eu/v/1/signature/standalone/swagger` | Swagger UI / OpenAPI description |
+| `https://standalone-signer-demo.signator.eu/v/1/signature/standalone/health/basic` | Liveness |
+| `https://standalone-signer-demo.signator.eu/v/1/signature/standalone/health/ready` | Readiness |
+| `https://standalone-signer-demo.signator.eu/signature/standalone/sdk/signator-signer-sdk.js` | JavaScript SDK |
+| [`https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html) | SDK test harness (see [Try the flows](#try-the-flows)) |
+| `https://standalone-signer-demo.signator.eu/signature/standalone/sdk/sign.html` | [Hosted signing page](#hosted-signing-page), where the signer finishes after identification |
+| [`https://standalone-signer-demo.signator.eu/signature/standalone/`](https://standalone-signer-demo.signator.eu/signature/standalone/) | Signature request dashboard (sign in with your API client) |
 
 ## Concepts
 
@@ -95,19 +95,19 @@ For providers that read the certificate from the signer's own device (<code>Loca
 
 ## Try the flows
 
-The [SDK test harness](#sdk-test-harness) on your Standalone Signer host runs every flow end to end with a sample PDF. Each link below opens it with the flow preconfigured: sign in with your API client and press **Run**. Follow the request in the [dashboard](https://{{SIGNER_HOST}}/signature/standalone/) (state changes, webhook attempts, audit log). Add `&locale=hr` (or `sl`, `de`, `fr`, `it`) to see the signing UI in another language.
+The [SDK test harness](#sdk-test-harness) on your Standalone Signer host runs every flow end to end with a sample PDF. Each link below opens it with the flow preconfigured: sign in with your API client and press **Run**. Follow the request in the [dashboard](https://standalone-signer-demo.signator.eu/signature/standalone/) (state changes, webhook attempts, audit log). Add `&locale=hr` (or `sl`, `de`, `fr`, `it`) to see the signing UI in another language.
 
 | Flow | Open the harness with | What you see |
 |---|---|---|
-| QES, signer chooses the provider | [`sdk-test.html?scenario=qes`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=qes) | Provider chooser (FINA, Certilia, Swisscom), provider consent, `Signed` → `Finished`. |
-| QES, one provider | [`sdk-test.html?scenario=qes-single`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=qes-single) | **Sign** goes straight to the provider. |
-| AES | [`sdk-test.html?scenario=aes`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=aes) | Advanced signature with Swisscom or a smart card / token. |
-| Smart card or token | [`sdk-test.html?scenario=local-component`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=local-component) | The local component check page and signing with the card. |
-| Organisation seal (SES) | [`sdk-test.html?scenario=ses`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=ses) | Sealed during the call with the ViziBit seal `Generic`; no provider page. |
-| Preset, locked signature position | [`sdk-test.html?scenario=preset-locked`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=preset-locked) | The signature is shown where your backend placed it and cannot be moved. |
-| Signer rejects | [`sdk-test.html?scenario=reject`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=reject) | **Reject** with a reason → `Rejected`, error webhook. |
-| Identification, then signing | [`sdk-test.html?scenario=identification`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=identification) | **I don't have a digital identity** → identification in a new window → that window becomes the signing page → signing with Swisscom; the harness page follows and reports the outcome. |
-| Your own backend's request | [`sdk-test.html`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html) → **Use existing token…** | The SDK with a signature token your backend created. |
+| QES, signer chooses the provider | [`sdk-test.html?scenario=qes`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=qes) | Provider chooser (FINA, Certilia, Swisscom), provider consent, `Signed` → `Finished`. |
+| QES, one provider | [`sdk-test.html?scenario=qes-single`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=qes-single) | **Sign** goes straight to the provider. |
+| AES | [`sdk-test.html?scenario=aes`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=aes) | Advanced signature with Swisscom or a smart card / token. |
+| Smart card or token | [`sdk-test.html?scenario=local-component`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=local-component) | The local component check page and signing with the card. |
+| Organisation seal (SES) | [`sdk-test.html?scenario=ses`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=ses) | Sealed during the call with the ViziBit seal `Generic`; no provider page. |
+| Preset, locked signature position | [`sdk-test.html?scenario=preset-locked`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=preset-locked) | The signature is shown where your backend placed it and cannot be moved. |
+| Signer rejects | [`sdk-test.html?scenario=reject`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=reject) | **Reject** with a reason → `Rejected`, error webhook. |
+| Identification, then signing | [`sdk-test.html?scenario=identification`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=identification) | **I don't have a digital identity** → identification in a new window → that window becomes the signing page → signing with Swisscom; the harness page follows and reports the outcome. |
+| Your own backend's request | [`sdk-test.html`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html) → **Use existing token…** | The SDK with a signature token your backend created. |
 
 ## Request states
 
@@ -125,7 +125,7 @@ The [SDK test harness](#sdk-test-harness) on your Standalone Signer host runs ev
 
 [![Request state machine](images/standalone_signer_states.png)](images/standalone_signer_states.png)
 
-To watch the transitions, run a flow from [Try the flows](#try-the-flows) and open the request in the [dashboard](https://{{SIGNER_HOST}}/signature/standalone/): its audit log lists every state change and webhook attempt. A short expiry in the harness (minutes) shows `Expired`; **Reject** shows `Rejected`.
+To watch the transitions, run a flow from [Try the flows](#try-the-flows) and open the request in the [dashboard](https://standalone-signer-demo.signator.eu/signature/standalone/): its audit log lists every state change and webhook attempt. A short expiry in the harness (minutes) shows `Expired`; **Reject** shows `Rejected`.
 
 Identification is a sub-state of `Initialized`: it never changes the request `state` and can only run before signing starts. Its progress is reported in `identification.status` (see [Identification status](#identification-status)).
 
@@ -163,14 +163,14 @@ Sending an access token to a `/pdf/*` endpoint returns `401` with `errorCode` `3
 ## Get an access token
 
 ```shell
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/connect/token" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/connect/token" \
   -d grant_type=client_credentials \
   -d client_id={{CLIENT_ID}} \
   -d client_secret={{CLIENT_SECRET}}
 ```
 
 ```csharp
-using var http = new HttpClient { BaseAddress = new Uri("https://{{SIGNER_HOST}}/v/1/signature/standalone/") };
+using var http = new HttpClient { BaseAddress = new Uri("https://standalone-signer-demo.signator.eu/v/1/signature/standalone/") };
 
 var tokenResponse = await http.PostAsync("connect/token", new FormUrlEncodedContent(new Dictionary<string, string>
 {
@@ -185,7 +185,7 @@ var accessToken = token.GetProperty("access_token").GetString();
 
 ```javascript
 // Node.js 18+ (backend only — never expose the client secret to a browser)
-const res = await fetch('https://{{SIGNER_HOST}}/v/1/signature/standalone/connect/token', {
+const res = await fetch('https://standalone-signer-demo.signator.eu/v/1/signature/standalone/connect/token', {
   method: 'POST',
   body: new URLSearchParams({
     grant_type: 'client_credentials',
@@ -225,7 +225,7 @@ Backend endpoints. All require the **access token** (`Authorization: Bearer <acc
 ## Create a signature request
 
 ```shell
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -276,7 +276,7 @@ var signatureToken = created.GetProperty("signatureToken").GetString();
 ```
 
 ```javascript
-const res = await fetch('https://{{SIGNER_HOST}}/v/1/signature/standalone/integration', {
+const res = await fetch('https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration', {
   method: 'POST',
   headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -351,7 +351,7 @@ Store `signatureRequestId`, `signatureToken`, your webhook secret and `expiresAt
 ### Send the PDF as multipart/form-data
 
 ```shell
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -F "document=@Employment contract - Ivana Horvat.pdf;type=application/pdf" \
   -F 'request={
@@ -402,7 +402,7 @@ form.append('request', new Blob([JSON.stringify({
 })], { type: 'application/json' }));
 
 // Do not set Content-Type yourself: fetch adds the multipart boundary.
-const res = await fetch('https://{{SIGNER_HOST}}/v/1/signature/standalone/integration', {
+const res = await fetch('https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration', {
   method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form
 });
 ```
@@ -417,7 +417,7 @@ The same endpoint also accepts `multipart/form-data`, so large PDFs do not have 
 * If `request` has no `documentName`, the file name of the `document` part is used.
 * Sending the PDF both as the `document` part and in `request` returns `400`; a missing `request` part returns `400` (`errorCode` `275`); a missing PDF returns `400` (`errorCode` `135`).
 * Other content types than `application/json` and `multipart/form-data` return `415`.
-* To try it, open the [SDK test harness](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?format=multipart) with `?format=multipart` (or choose **Request format** there): the activity log shows the parts that were sent.
+* To try it, open the [SDK test harness](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?format=multipart) with `?format=multipart` (or choose **Request format** there): the activity log shows the parts that were sent.
 
 ### Signing policy rules
 
@@ -478,7 +478,7 @@ If you pass your own `signatureText` or `signatureImage` to the SDK instead, the
 ## Get a signature request
 
 ```shell
-curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11" \
+curl "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
@@ -489,7 +489,7 @@ var signed = details.GetProperty("signed").GetBoolean();
 ```
 
 ```javascript
-const res = await fetch(`https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/${signatureRequestId}`, {
+const res = await fetch(`https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration/${signatureRequestId}`, {
   headers: { Authorization: `Bearer ${accessToken}` }
 });
 const details = await res.json();
@@ -530,7 +530,7 @@ Returns the full status of one of your requests. Use it to reconcile lost webhoo
 ## Download the document
 
 ```shell
-curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11/document" \
+curl "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11/document" \
   -H "Authorization: Bearer $ACCESS_TOKEN" -o signed.pdf
 ```
 
@@ -540,7 +540,7 @@ await File.WriteAllBytesAsync("signed.pdf", pdf);
 ```
 
 ```javascript
-const res = await fetch(`https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/${signatureRequestId}/document`, {
+const res = await fetch(`https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration/${signatureRequestId}/document`, {
   headers: { Authorization: `Bearer ${accessToken}` }
 });
 const pdf = Buffer.from(await res.arrayBuffer());
@@ -553,7 +553,7 @@ Returns the current PDF (`application/pdf`, with a `Content-Disposition` file na
 ## Reject (cancel) a request
 
 ```shell
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11/reject" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration/3f1c7d2a-5a6e-4f5e-9d0b-0d7e9b1c2a11/reject" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "reason": "Contract withdrawn" }'
@@ -564,7 +564,7 @@ await http.PostAsJsonAsync($"integration/{signatureRequestId}/reject", new { rea
 ```
 
 ```javascript
-await fetch(`https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/${signatureRequestId}/reject`, {
+await fetch(`https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration/${signatureRequestId}/reject`, {
   method: 'POST',
   headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
   body: JSON.stringify({ reason: 'Contract withdrawn' })
@@ -718,11 +718,11 @@ Respond quickly with `2xx` and do slow work (downloads, notifications) after ack
 
 ```html
 <div id="signer" style="height: 80vh"></div>
-<script src="https://{{SIGNER_HOST}}/signature/standalone/sdk/signator-signer-sdk.js"></script>
+<script src="https://standalone-signer-demo.signator.eu/signature/standalone/sdk/signator-signer-sdk.js"></script>
 <script>
   const signer = SignatorSigner.create({
     container: '#signer',
-    backendUrl: 'https://{{SIGNER_HOST}}',
+    backendUrl: 'https://standalone-signer-demo.signator.eu',
     signatureToken: signatureTokenFromYourBackend,
     locale: 'hr',
     signatureText: { lineOne: 'Ivana Horvat', lineTwo: 'Employee' },
@@ -742,7 +742,7 @@ The signing policy is not configured in the SDK: the SDK reads the level, the al
 | Option | Default | Description |
 |---|---|---|
 | `container` | required | Element or CSS selector. Give it an explicit height. |
-| `backendUrl` | required | `https://{{SIGNER_HOST}}` |
+| `backendUrl` | required | `https://standalone-signer-demo.signator.eu` |
 | `signatureToken` | required | `signatureToken` from the create call. |
 | `onSuccess(result)` | required | Called once when the document is signed. |
 | `onError(result)` | required | Called once when signing failed, was rejected or expired, or the component could not start. |
@@ -792,7 +792,7 @@ Signature placement: a signature with a known position (from the create call or 
 
 ## What the signer experiences
 
-Every behaviour below can be tried in the [SDK test harness](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html); see [Try the flows](#try-the-flows) for preconfigured links.
+Every behaviour below can be tried in the [SDK test harness](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html); see [Try the flows](#try-the-flows) for preconfigured links.
 
 * **Preset signature:** a signature with a position appears on the document right away — fixed when the request locks it, otherwise movable.
 * **SES (seal):** **Sign** seals the document immediately; no provider page.
@@ -824,7 +824,7 @@ These endpoints use the **signature token** and are what the SDK calls. You only
 ## Get the signing state
 
 ```shell
-curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/state" \
+curl "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/pdf/state" \
   -H "Authorization: Bearer $SIGNATURE_TOKEN"
 ```
 
@@ -864,7 +864,7 @@ The policy the signing UI may offer plus progress. `identificationAllowed` is `t
 ## Start signing
 
 ```shell
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/init" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/pdf/init" \
   -H "Authorization: Bearer $SIGNATURE_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "provider": "CertiliaSdurddV1", "language": "HR" }'
@@ -889,9 +889,9 @@ Outcomes: for `SES` the document is sealed during the call (state `Signed`, webh
 ## Start identification
 
 ```shell
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/identification" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/pdf/identification" \
   -H "Authorization: Bearer $SIGNATURE_TOKEN" -H "Content-Type: application/json" \
-  -d '{ "returnUrl": "https://{{SIGNER_HOST}}/signature/standalone/sdk/sign.html#identification=1&locale=hr",
+  -d '{ "returnUrl": "https://standalone-signer-demo.signator.eu/signature/standalone/sdk/sign.html#identification=1&locale=hr",
         "handover": true, "language": "HR" }'
 ```
 
@@ -943,21 +943,21 @@ Your organisation's seal certificate is installed and assigned to your API clien
 
 ## Seal without a user interface
 
-Try it in the harness: [`sdk-test.html?scenario=ses`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=ses) (seals with the ViziBit seal `Generic`; enter your own seal id to test it).
+Try it in the harness: [`sdk-test.html?scenario=ses`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=ses) (seals with the ViziBit seal `Generic`; enter your own seal id to test it).
 
 ```shell
 # 1. create the request (as usual)
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration" \
   -H "Authorization: Bearer $ACCESS_TOKEN" -H "Content-Type: application/json" \
   -d '{ "document": "JVBERi0x…", "signatureLevel": "SES", "sealId": "acme-hr-seal",
         "callbacks": { "onSigned": "https://app.example.com/hooks/s", "onError": "https://app.example.com/hooks/e" } }'
 
 # 2. seal immediately with the returned signature token
-curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/init" \
+curl -X POST "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/pdf/init" \
   -H "Authorization: Bearer $SIGNATURE_TOKEN" -H "Content-Type: application/json" -d '{}'
 
 # 3. download the sealed PDF
-curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/integration/$SIGNATURE_REQUEST_ID/document" \
+curl "https://standalone-signer-demo.signator.eu/v/1/signature/standalone/integration/$SIGNATURE_REQUEST_ID/document" \
   -H "Authorization: Bearer $ACCESS_TOKEN" -o sealed.pdf
 ```
 
@@ -1001,7 +1001,7 @@ A signer who has no digital identity yet (no certificate with any provider you o
 
 ## How it works
 
-Try it in the harness: [`sdk-test.html?scenario=identification`](https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html?scenario=identification). On the signing page choose **Sign** → **I don't have a digital identity**.
+Try it in the harness: [`sdk-test.html?scenario=identification`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=identification). On the signing page choose **Sign** → **I don't have a digital identity**.
 
 1. Your backend creates the request with `allowIdentification: true`, `identificationProvider` and optionally `identificationMethods`.
 2. In the signing UI, **Sign** opens the provider chooser, which also offers **"I don't have a digital identity"**.
@@ -1048,14 +1048,14 @@ A video identification that takes longer than 30 minutes cannot report its resul
 
 If you build your own signing UI:
 
-1. Call [Start identification](#start-identification) with a `returnUrl`. To let the signer finish on the hosted signing page, use `https://{{SIGNER_HOST}}/signature/standalone/sdk/sign.html#identification=1` (add `&locale=hr` for the UI language) with `"handover": true`. Or use a page of yours that loads the signing UI for the same request (your page knows the token; do not put it in the `returnUrl`).
+1. Call [Start identification](#start-identification) with a `returnUrl`. To let the signer finish on the hosted signing page, use `https://standalone-signer-demo.signator.eu/signature/standalone/sdk/sign.html#identification=1` (add `&locale=hr` for the UI language) with `"handover": true`. Or use a page of yours that loads the signing UI for the same request (your page knows the token; do not put it in the `returnUrl`).
 2. Open `redirectUrl` in a new window or tab, not in an iframe.
 3. Poll [`/pdf/state`](#get-the-signing-state) every few seconds for `identification.status` (`Completed` or `Failed`) and for the request `state`. The `returnUrl` receives `ident_error_code` or `error_code` parameters when identification failed, but the state is the reliable source.
 4. On `Completed`, [start signing](#start-signing) with `provider` set to `identification.signingProvider` (on the page the signer is on), or wait for the outcome when the signer signs on the hosted signing page.
 
 ## Hosted signing page
 
-`https://{{SIGNER_HOST}}/signature/standalone/sdk/sign.html` is a full-page signing UI served by the Standalone Signer. Identification returns to it so that the signer can finish signing in the identification window: it exchanges the `handover` code for the request's signature token and opens the document.
+`https://standalone-signer-demo.signator.eu/signature/standalone/sdk/sign.html` is a full-page signing UI served by the Standalone Signer. Identification returns to it so that the signer can finish signing in the identification window: it exchanges the `handover` code for the request's signature token and opens the document.
 
 | Fragment parameter | Description |
 |---|---|
@@ -1173,7 +1173,7 @@ ViziBit provides a sandbox host and an API client per integration team and tells
 
 ## SDK test harness
 
-`https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html` runs the complete flow against the host it is served from:
+`https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html` runs the complete flow against the host it is served from:
 
 1. **Sign in** with your API client (`client_id` / `client_secret`).
 2. **Signature request (your backend):** level, allowed providers, jurisdiction, signer phone number, identification (provider and methods), seal id, external reference, document name and expiry. This is exactly what your backend would send.
@@ -1190,7 +1190,7 @@ The harness creates requests with callback URLs pointing to the Standalone Signe
 
 ## Dashboard
 
-`https://{{SIGNER_HOST}}/signature/standalone/` lists your signature requests (filter by state or text: id, external reference, document name, provider…). The detail view shows the signing policy, the provider used, timestamps, webhook configuration and the full **audit log** of every state change, webhook attempt and error. The **support identifier** shown in the SDK error dialog is the `signatureRequestId`: search for it here.
+`https://standalone-signer-demo.signator.eu/signature/standalone/` lists your signature requests (filter by state or text: id, external reference, document name, provider…). The detail view shows the signing policy, the provider used, timestamps, webhook configuration and the full **audit log** of every state change, webhook attempt and error. The **support identifier** shown in the SDK error dialog is the `signatureRequestId`: search for it here.
 
 # Operations
 
@@ -1198,8 +1198,8 @@ The harness creates requests with callback URLs pointing to the Standalone Signe
 
 | From → to | Purpose |
 |---|---|
-| Your backend → `https://{{SIGNER_HOST}}` | API calls (token, signature requests, downloads). |
-| Signers' browsers → `https://{{SIGNER_HOST}}` | SDK, document preview and signing. |
+| Your backend → `https://standalone-signer-demo.signator.eu` | API calls (token, signature requests, downloads). |
+| Signers' browsers → `https://standalone-signer-demo.signator.eu` | SDK, document preview and signing. |
 | Standalone Signer → your webhook endpoints | Webhooks. If you filter incoming traffic, allow the addresses ViziBit gives you for your environment. |
 | Signers' browsers → `cdnjs.cloudflare.com` | PDF.js, unless you self-host it (`pdfJsUrl`, `pdfWorkerUrl`). |
 | Signers' browsers → provider pages | Consent pages of FINA, Certilia, Swisscom and A-Trust; for card/token signing, the ViziBit local component on the signer's own computer. |
@@ -1216,7 +1216,7 @@ The Standalone Signer can also run in your own infrastructure. The API, the SDK 
 
 ## Monitoring and support
 
-* `GET https://{{SIGNER_HOST}}/v/1/signature/standalone/health/basic` (liveness) and `/v/1/signature/standalone/health/ready` (readiness).
+* `GET https://standalone-signer-demo.signator.eu/v/1/signature/standalone/health/basic` (liveness) and `/v/1/signature/standalone/health/ready` (readiness).
 * Every request has an audit log in the [dashboard](#dashboard) with each state change, webhook attempt and error; the SDK shows signers a support identifier (the `signatureRequestId`) to quote when contacting support.
 * ViziBit support can re-send webhooks and expire stuck requests.
 * Provider availability (FINA, AKD/Certilia, Swisscom, A-Trust) is outside the Standalone Signer; provider errors are reported in the webhook `message` and the audit log.
