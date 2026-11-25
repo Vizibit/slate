@@ -18,7 +18,7 @@ The base URL of your environment and your API credentials (<code>client_id</code
 
 ## Base URL and environments
 
-All API endpoints share the prefix `/v/1/signature/standalone` on the Standalone Signer host.
+All API endpoints share the prefix `/v/1/signature/standalone` on the Standalone Signer host; the SDK and the web pages are served under `/signature/standalone`.
 
 | Environment | Base URL | Notes |
 |---|---|---|
@@ -30,13 +30,13 @@ Other useful URLs on every host:
 
 | URL | Purpose |
 |---|---|
-| `https://{{SIGNER_HOST}}/v/1/signature/swagger` | Swagger UI / OpenAPI description |
-| `https://{{SIGNER_HOST}}/sdk/signator-signer-sdk.js` | JavaScript SDK |
-| `https://{{SIGNER_HOST}}/sdk-test.html` | SDK test harness |
-| `https://{{SIGNER_HOST}}/` | Signature request dashboard (sign in with your API client) |
-| `https://{{SIGNER_HOST}}/admin.html` | API client administration |
-| `https://{{SIGNER_HOST}}/v/1/signature/health/basic` | Liveness |
-| `https://{{SIGNER_HOST}}/v/1/signature/health/ready` | Readiness (database reachable) |
+| `https://{{SIGNER_HOST}}/v/1/signature/standalone/swagger` | Swagger UI / OpenAPI description |
+| `https://{{SIGNER_HOST}}/v/1/signature/standalone/health/basic` | Liveness |
+| `https://{{SIGNER_HOST}}/v/1/signature/standalone/health/ready` | Readiness |
+| `https://{{SIGNER_HOST}}/signature/standalone/sdk/signator-signer-sdk.js` | JavaScript SDK |
+| `https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html` | SDK test harness |
+| `https://{{SIGNER_HOST}}/signature/standalone/` | Signature request dashboard (sign in with your API client) |
+| `https://{{SIGNER_HOST}}/signature/standalone/admin.html` | API client administration |
 
 ## Concepts
 
@@ -295,6 +295,7 @@ const { signatureRequestId, signatureToken } = await res.json();
   "jurisdiction": "EIDAS",
   "sealId": null,
   "allowIdentification": false,
+  "lockSignaturePosition": false,
   "documentName": "Employment contract - Ivana Horvat.pdf",
   "externalReference": "hr/contracts/4711"
 }
@@ -313,7 +314,8 @@ const { signatureRequestId, signatureToken } = await res.json();
 | `sealId` | string | SES | Seal to apply. May be omitted when exactly one seal is assigned to your API client. Must be a seal assigned to your client. Not allowed for QES/AES. |
 | `signer.phoneNumber` | string | for `FinaRiws` | The signer's mobile number in international format (e.g. `+385911234567`; spaces, dashes and parentheses are removed). Required when `FinaRiws` is allowed; optional login hint for `SwisscomEtsiV1`. Ignored when no allowed provider uses it, and kept only until signing starts. |
 | `allowIdentification` | boolean | no | Lets a signer without a digital identity start remote identification from the signing UI. QES/AES only. See [Identification](#identification-of-signers-without-a-digital-identity). |
-| `signatureImage` | object | no | Default position and appearance of the visible signature. See [Signature appearance](#signature-appearance). Without it the signature is invisible unless the signer places one. |
+| `signatureImage` | object | no | Position and appearance of the visible signature. With a position, the signer sees it there as soon as the document opens. See [Signature appearance](#signature-appearance). Without it the signature is invisible unless the signer places one. |
+| `lockSignaturePosition` | boolean | no | Fixes the signature at the position in `signatureImage` (page, offsets and size required): the signer cannot move or resize it and the signing UI cannot send another placement. |
 | `callbacks.onSigned` | URL | yes | Absolute `http`/`https` URL called when the document is signed. |
 | `callbacks.onError` | URL | yes | Absolute `http`/`https` URL called when signing failed, was rejected or expired. |
 | `callbacks.method` | string | no | `POST` (default), `PUT`, `PATCH` or `DELETE`. |
@@ -372,7 +374,13 @@ The `signatureImage` object describes where the visible signature goes and what 
 
 An A4 page is 595 × 842 points. A box in the bottom-right corner with 40 pt margins: `widgetOffsetX = 595 − 40 − width`, `widgetOffsetY = 40`.
 
-**Who decides the placement:** the position sent when the signer places the signature in the SDK overrides the one from the create request. To fix the placement (e.g. the signature field of a contract template), set `signatureImage` when creating the request and mount the SDK **without** signature options: the signer then only clicks **Sign**.
+**Presetting the signature:** when `signatureImage` has a position, the SDK draws the signature at that position as soon as the document opens; the signer does not have to place it.
+
+* **Suggested position** (default): the signer may drag or resize it before clicking **Sign**; only the new position is sent, the appearance stays yours.
+* **Fixed position:** add `"lockSignaturePosition": true`, e.g. for the signature field of a contract template. The signer sees the signature where it will be applied and can only click **Sign**; the Standalone Signer rejects any other placement (`403`).
+* **No position:** the signature is invisible unless the signer places one with the SDK.
+
+If you pass your own `signatureText` or `signatureImage` to the SDK instead, the SDK appearance is used (unless the request locks the position), starting at `signaturePosition` or the position from the create call.
 
 `POST /v/1/signature/standalone/signature_image/preview` (no authentication) takes the same object and returns a PNG preview of the generated card.
 
@@ -413,6 +421,7 @@ const details = await res.json();
   "jurisdiction": "EIDAS",
   "sealId": null,
   "allowIdentification": false,
+  "lockSignaturePosition": false,
   "createdAt": "2026-11-24T10:00:00Z",
   "signedAt": "2026-11-24T10:04:12Z",
   "finishedAt": "2026-11-24T10:04:12Z",
@@ -654,7 +663,7 @@ Respond quickly with `2xx` and do slow work (downloads, notifications) after ack
 
 ```html
 <div id="signer" style="height: 80vh"></div>
-<script src="https://{{SIGNER_HOST}}/sdk/signator-signer-sdk.js"></script>
+<script src="https://{{SIGNER_HOST}}/signature/standalone/sdk/signator-signer-sdk.js"></script>
 <script>
   const signer = SignatorSigner.create({
     container: '#signer',
@@ -689,20 +698,21 @@ The signing policy is not configured in the SDK: the SDK reads the level, the al
 | `providerLabels` | — | Your own labels for the provider chooser, e.g. `{ FinaRiws: 'FINA (mobile)' }`. |
 | `signatureText` | — | `{ lineOne, lineTwo, lineThree, lineFour, useHandwrittenStyle }`: the signer positions a generated signature card. |
 | `signatureImage` | — | Base64 or data-URL image (PNG/JPEG) the signer positions. |
-| `signaturePosition` | centre of the first visible page | `{ page, x, y, width, height }` in PDF points (bottom-left origin): initial placement of the card or image. |
+| `signaturePosition` | position from the create call, else none | `{ page, x, y, width, height }` in PDF points (bottom-left origin). With a position the signature is shown there when the document opens; without one the signer places it (**Position image**). |
+| `lockSignaturePosition` | `false` | Keeps the signature at `signaturePosition`: no drag or resize. This only locks the UI; to enforce a position, set `lockSignaturePosition` in the create call. |
 | `allowReject` | `false` | Show a **Reject** button; the signer can decline with an optional reason. |
 | `mode` | `iframe` | `popup` opens the signer in a separate window instead of the container. |
 | `propagateErrors` | `true` | `false`: the SDK shows its own error dialog (with a support identifier) instead of calling `onError`. |
 | `successfulSignatureRedirect`, `unsuccessfulSignatureRedirect` | bundled pages | Pages the provider returns the signer to. Keep the defaults unless you host your own (see below). |
 | `pdfJsUrl`, `pdfWorkerUrl` | PDF.js 4.0.379 from cdnjs | Point to self-hosted copies for on-premise or strict-CSP deployments. |
 | `pollIntervalMs`, `pollMaxMs` | `2000`, `30000` | Status polling back-off. |
-| `frameUrl` | `{backendUrl}/sdk/signer-frame.html` | Override only for custom hosting. |
+| `frameUrl` | `{backendUrl}/signature/standalone/sdk/signer-frame.html` | Override only for custom hosting. |
 | `debug` | `false` | Verbose logging; enables `onPosition` events with the placed coordinates. |
 
 Methods: `signer.destroy()` removes the component (e.g. when the user navigates away).
 
 <aside class="notice">
-Signature placement: if you pass <code>signatureText</code> or <code>signatureImage</code>, the signer positions the signature (<b>Position image</b> → drag/resize → <b>Sign</b>). Without them the signer only clicks <b>Sign</b> and the placement from the create request (or an invisible signature) is used.
+Signature placement: a signature with a known position (from the create call or <code>signaturePosition</code>) is shown on the document as soon as it opens, movable unless locked. A signature without a position is placed by the signer (<b>Position image</b> → drag/resize → <b>Sign</b>). Without any signature the signer only clicks <b>Sign</b>.
 </aside>
 
 ## Result object
@@ -726,6 +736,7 @@ Signature placement: if you pass <code>signatureText</code> or <code>signatureIm
 
 ## What the signer experiences
 
+* **Preset signature:** a signature with a position appears on the document right away — fixed when the request locks it, otherwise movable.
 * **SES (seal):** **Sign** seals the document immediately; no provider page.
 * **QES/AES with one allowed provider:** **Sign** starts the provider directly.
 * **QES/AES with several providers:** **Sign** opens a chooser listing only the providers you allowed, in your order, with localized names (override with `providerLabels`).
@@ -770,6 +781,7 @@ curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/state" \
   "provider": "CertiliaSdurddV1",
   "identificationAllowed": false,
   "documentName": "Employment contract - Ivana Horvat.pdf",
+  "presetSignature": { "appearance": "CARD", "page": 3, "x": 355, "y": 40, "width": 200, "height": 70, "locked": true },
   "consentUrl": "https://provider.example/consent/…",
   "errorCode": null,
   "message": null,
@@ -780,7 +792,11 @@ curl "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/state" \
 
 `GET /v/1/signature/standalone/pdf/state` (also accepts `POST`)
 
-The policy the signing UI may offer plus progress. `consentUrl` appears a few seconds after a QES/AES signature was started. `externalReference` is deliberately not exposed to the signer.
+The policy the signing UI may offer plus progress. `presetSignature` describes the signature from the create call (`null` if none). `consentUrl` appears a few seconds after a QES/AES signature was started. `externalReference` is deliberately not exposed to the signer.
+
+## Get the preset signature image
+
+`GET /v/1/signature/standalone/pdf/signature_image` (also accepts `POST`) — the preset signature as an image for display: your own image for `appearance` `0` (exactly what is stamped), otherwise a PNG of the generated card. `404` when the request has no preset signature.
 
 ## Download the document for preview
 
@@ -800,11 +816,12 @@ curl -X POST "https://{{SIGNER_HOST}}/v/1/signature/standalone/pdf/init" \
 | Field | Description |
 |---|---|
 | `provider` | One of the request's `providers`. May be omitted when only one is allowed. Ignored for `SES`. |
-| `signatureImage` | Optional placement/appearance overriding the one from the create call. |
+| `signatureImage` | Optional placement and appearance replacing the one from the create call. |
+| `signaturePosition` | Optional `{ page, x, y, width, height }` moving the signature (keeping its appearance). |
 | `language` | Provider consent-page language (default `EN`). |
 | `successfulSignatureRedirect`, `unsuccessfulSignatureRedirect` | Pages the provider returns to (the SDK sends its bundled pages). |
 
-Outcomes: for `SES` the document is sealed during the call (state `Signed`, webhook queued). For `QES`/`AES` the state becomes `WaitingForUserApproval` and `consentUrl` follows. Errors: `400` (`186`) provider required, `403` (`205`) provider not allowed for the request, `409` already started or finished, `410` document deleted.
+Outcomes: for `SES` the document is sealed during the call (state `Signed`, webhook queued). For `QES`/`AES` the state becomes `WaitingForUserApproval` and `consentUrl` follows. Errors: `400` (`186`) provider required, `403` (`205`) provider not allowed for the request or signature position locked, `409` already started or finished, `410` document deleted.
 
 ## Reject as the signer
 
@@ -893,7 +910,7 @@ In webhooks and in `/pdf/state` the same errors appear by **name** (e.g. `"Stand
 | 275 | `BadRequest` | 400 | Other validation errors: level, phone number, jurisdiction, callback URL or method, field lengths, invalid usage range |
 | 186 | `SignatureProviderNotDefined` | 400 | Providers missing or unknown; provider must be chosen |
 | 53 | `UnsupportedSignatureMethod` | 400 | Provider does not support the requested level |
-| 205 | `ForbiddenAccessMissingPermissions` | 403 | Seal not assigned to your client; provider not allowed for the request; identification not allowed |
+| 205 | `ForbiddenAccessMissingPermissions` | 403 | Seal not assigned to your client; provider not allowed for the request; signature position locked; identification not allowed |
 | 30019 | `StandaloneIntegrationUnauthorized` | 401 / 403 | Missing or wrong token type; managing another client |
 | 84 | `EntityNotFound` | 404 | Request does not exist or belongs to another client |
 | 30018 | `StandaloneIntegrationInvalidState` | 409 | Action not possible in the current state |
@@ -967,12 +984,12 @@ ViziBit provides a sandbox host and an API client per integration team, tells yo
 
 ## SDK test harness
 
-`https://{{SIGNER_HOST}}/sdk-test.html` runs the complete flow against the host it is served from:
+`https://{{SIGNER_HOST}}/signature/standalone/sdk-test.html` runs the complete flow against the host it is served from:
 
 1. **Sign in** with your API client (`client_id` / `client_secret`).
 2. **Signature request (your backend):** level, allowed providers, jurisdiction, signer phone number, identification, seal id, external reference, document name and expiry. This is exactly what your backend would send.
 3. **SDK options (signing UI):** UI language, preferred provider, provider language, **Reject** button, error propagation.
-4. **Signature:** generated card, uploaded image or none, plus an optional initial position (PDF points).
+4. **Signature:** generated card, uploaded image or none, an optional position (PDF points), whether it is sent in the create request (preset by your backend) or as SDK options, and whether its position is locked.
 5. **Run** creates a request with a sample PDF and mounts the SDK in an iframe; **Open in window** uses a popup; **Destroy instance** unmounts it.
 6. **Use existing token…** mounts the SDK with a signature token created by **your own backend** — the fastest way to test your backend integration before your frontend exists.
 7. The **activity log** shows every HTTP call, status event, placement event and callback. After success, **Download signed PDF** fetches the result.
@@ -983,7 +1000,7 @@ The harness creates requests with callback URLs pointing to the Standalone Signe
 
 ## Dashboard
 
-`https://{{SIGNER_HOST}}/` lists your signature requests (filter by state or text: id, external reference, document name, provider…). The detail view shows the signing policy, the provider used, timestamps, webhook configuration and the full **audit log** of every state change, webhook attempt and error. The **support identifier** shown in the SDK error dialog is the `signatureRequestId`: search for it here. Administrators can re-send webhooks, force-expire stuck requests and delete stored documents.
+`https://{{SIGNER_HOST}}/signature/standalone/` lists your signature requests (filter by state or text: id, external reference, document name, provider…). The detail view shows the signing policy, the provider used, timestamps, webhook configuration and the full **audit log** of every state change, webhook attempt and error. The **support identifier** shown in the SDK error dialog is the `signatureRequestId`: search for it here. Administrators can re-send webhooks, force-expire stuck requests and delete stored documents.
 
 # Operations
 
@@ -1009,14 +1026,14 @@ The Standalone Signer can also run in your own infrastructure. The API, the SDK 
 
 ## Monitoring and support
 
-* `GET https://{{SIGNER_HOST}}/v/1/signature/health/basic` (liveness) and `/v/1/signature/health/ready` (readiness).
+* `GET https://{{SIGNER_HOST}}/v/1/signature/standalone/health/basic` (liveness) and `/v/1/signature/standalone/health/ready` (readiness).
 * Every request has an audit log in the [dashboard](#dashboard) with each state change, webhook attempt and error; the SDK shows signers a support identifier (the `signatureRequestId`) to quote when contacting support.
 * ViziBit support can re-send webhooks and expire stuck requests.
 * Provider availability (FINA, AKD/Certilia, Swisscom, A-Trust) is outside the Standalone Signer; provider errors are reported in the webhook `message` and the audit log.
 
 # Administration (API clients)
 
-Administrator access tokens can manage API clients; every client can read and rotate its own record. The same functions are available in `https://{{SIGNER_HOST}}/admin.html`.
+Administrator access tokens can manage API clients; every client can read and rotate its own record. The same functions are available in `https://{{SIGNER_HOST}}/signature/standalone/admin.html`.
 
 ```shell
 # Create a client with a partner and an assigned seal (admin)
