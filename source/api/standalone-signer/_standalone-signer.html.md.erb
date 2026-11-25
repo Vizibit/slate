@@ -24,7 +24,7 @@ All API endpoints share the prefix `/v/1/signature/standalone` on the Standalone
 |---|---|---|
 | Sandbox | `https://{{SIGNER_HOST}}/v/1/signature/standalone` | Provided with your sandbox credentials. Use it for development and testing. |
 | Production (cloud) | `https://{{SIGNER_HOST}}/v/1/signature/standalone` | Provided when you go live. |
-| On-premise | defined by your installation | Same API. See [Operations and on-premise deployment](#operations-and-on-premise-deployment). |
+| On-premise | defined by your installation | Same API. See [On-premise installations](#on-premise-installations). |
 
 Other useful URLs on every host:
 
@@ -318,7 +318,7 @@ const { signatureRequestId, signatureToken } = await res.json();
 | `callbacks.onError` | URL | yes | Absolute `http`/`https` URL called when signing failed, was rejected or expired. |
 | `callbacks.method` | string | no | `POST` (default), `PUT`, `PATCH` or `DELETE`. |
 | `callbacks.authorizationHeader` | string (≤ 4096) | no | Sent verbatim as the `Authorization` header of both webhooks. Use a random secret per request. |
-| `expiresAt` | string / number | no | Deadline as ISO 8601 date-time or Unix time in **seconds** (not milliseconds — JavaScript `Date.now()` must be divided by 1000). Default: 2 days after creation. Must be at least one minute in the future and at most 90 days ahead (defaults; an installation may configure other limits). |
+| `expiresAt` | string / number | no | Deadline as ISO 8601 date-time or Unix time in **seconds** (not milliseconds — JavaScript `Date.now()` must be divided by 1000). Default: 2 days after creation. Must be at least one minute in the future and at most 90 days ahead. |
 
 Store `signatureRequestId`, `signatureToken`, your webhook secret and `expiresAt` together with your document.
 
@@ -810,10 +810,6 @@ Outcomes: for `SES` the document is sealed during the call (state `Signed`, webh
 
 `POST /v/1/signature/standalone/pdf/reject` with `{ "reason": "…" }` (optional) → `204`.
 
-## Signing Service callback
-
-`POST /v/1/signature/standalone/pdf/digest_state` is called only by the ViziBit Signing Service to deliver the signed hash. It is authenticated with a token issued for that one signing ceremony; the signer's signature token is rejected there, so a signing UI cannot inject a signature of its own.
-
 ## Start identification
 
 `POST /v/1/signature/standalone/pdf/identification` with `{ "returnUrl": "…", "language": "HR" }` (optional) → `200 { "redirectUrl": "…" }`. See [Identification](#identification-of-signers-without-a-digital-identity).
@@ -831,7 +827,7 @@ An organisation seal (`signatureLevel: "SES"`) is applied with the organisation'
 5. **Renewal.** Before the certificate expires, the new certificate is installed under the same seal id. Integrations do not change.
 6. **Withdrawal.** Removing the seal id from the client stops its use immediately.
 
-Treat seal ids as confidential configuration.
+Treat seal ids as confidential.
 
 ## Seal without a user interface
 
@@ -989,97 +985,33 @@ The harness creates requests with callback URLs pointing to the Standalone Signe
 
 `https://{{SIGNER_HOST}}/` lists your signature requests (filter by state or text: id, external reference, document name, provider…). The detail view shows the signing policy, the provider used, timestamps, webhook configuration and the full **audit log** of every state change, webhook attempt and error. The **support identifier** shown in the SDK error dialog is the `signatureRequestId`: search for it here. Administrators can re-send webhooks, force-expire stuck requests and delete stored documents.
 
-## Running the Standalone Signer locally
-
-For platform and partner developers who build on the Standalone Signer itself:
-
-1. Start PostgreSQL: `docker run -d -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16-alpine`.
-2. Run the service with the *Standalone Signer (Development)* profile (`http://localhost:5080`). The schema is created automatically and a development administrator client is created with credentials shown to the local test pages.
-3. Create, preview, position, reject, state, download, dashboard and administration work without further setup.
-4. Seals need `SigningServiceClientSettings:SigningServiceBaseUrl` pointing at a Signing Service with the seal installed.
-5. QES/AES additionally need the Signing Service to reach your `StandaloneSignerBackendUrl` (it posts the signed hash to `/pdf/digest_state`); for a cloud Signing Service use a public tunnel to your machine, or test against the sandbox.
-
-# Operations and on-premise deployment
-
-## Components
-
-| Component | Notes |
-|---|---|
-| Standalone Signer container | One image (.NET 8, HTTP port 80) containing the API, SDK, dashboard and admin pages. |
-| PostgreSQL | Requests and audit log, API clients (OpenIddict), background jobs (Hangfire) and message queue (Rebus). Schemas are created and upgraded automatically at start-up. |
-| Document storage | Folder on a persistent volume; documents are stored AES-encrypted. |
-| TLS termination | Reverse proxy or ingress in front of the container. |
-| ViziBit Signing Service | Every signature and seal is executed by ViziBit's Signing Service, which talks to the providers. Only document hashes are exchanged. |
+# Operations
 
 ## Network requirements
 
-| Direction | From → to | Purpose |
-|---|---|---|
-| Outbound HTTPS | Standalone Signer → ViziBit Signing Service | Every signature and seal. |
-| **Inbound HTTPS** | ViziBit Signing Service → Standalone Signer `/v/1/signature/standalone/pdf/digest_state` | **Required for QES/AES:** the Signing Service delivers the signed hash to `StandaloneSignerBackendUrl`. |
-| Inbound HTTPS | Signers' browsers → Standalone Signer | SDK, document preview, signing. |
-| Outbound HTTPS | Standalone Signer → your webhook endpoints | Webhooks. |
-| Outbound HTTPS (browser) | Signers' browsers → cdnjs.cloudflare.com | PDF.js, unless self-hosted (`pdfJsUrl`, `pdfWorkerUrl`). |
-
-<aside class="warning">
-The inbound connection from the ViziBit Signing Service is a current requirement for QES/AES signatures. A mode in which the Standalone Signer retrieves the signed hash itself (no inbound connection) is planned and not yet implemented.
-</aside>
-
-## Configuration
-
-Settings use standard ASP.NET configuration; as environment variables, replace `:` with `__`.
-
-| Setting | Purpose |
+| From → to | Purpose |
 |---|---|
-| `ConnectionStrings:Default` (or `ConnectionStrings:StandaloneSigner`) | PostgreSQL connection. |
-| `RebusSettings:DatabaseConnectionString`, `RebusSettings:InputQueueName` | Message queue (normally the same database; queue `signator-standalone-signer-integration`). |
-| `Hangfire:ConnectionString`, `Hangfire:SchemaName` | Background jobs. |
-| `Hangfire:QesSigningWorkerCount` | Parallel QES/AES ceremonies on this instance (default 20). `0` disables QES/AES processing on the instance (see multi-instance). |
-| `Hangfire:CallbackWorkerCount`, `Hangfire:ExpirationSweepCron` | Webhook workers (default 10) and expiry sweep schedule (default every 5 minutes). |
-| `StandaloneSignerIntegrationSettings:StandaloneSignerBackendUrl` | Public URL of this installation, reachable by the Signing Service. |
-| `StandaloneSignerIntegrationSettings:DefaultExpirationDays`, `MaxExpirationDays` | Default (2) and maximum (90) request lifetime. |
-| `StandaloneSignerIntegrationSettings:UsageClientIdPrefix` | Installation identifier prefixed to client ids in usage reporting (`{prefix}:{clientId}`). ViziBit assigns one per on-premise installation. |
-| `StandaloneSignerIntegrationSettings:LocalDocumentStorage:StoragePath`, `EncryptionKey`, `EncryptionSecret` | Document folder and its encryption keys (identical on all instances). |
-| `SigningServiceClientSettings:SigningServiceBaseUrl` | ViziBit Signing Service URL. |
-| `TimestampService:Server` | Timestamp authority used for signatures. |
-| `QesSigning:SignaturePollDurationMinutes` | How long a QES/AES ceremony may wait for the signer (default 90). |
-| `IntegrationCallbacks:RetryDelaysSeconds`, `IntegrationCallbacks:TimeoutMilliseconds` | Webhook retry schedule (default 30, 60, 180, 300) and timeout (15000). |
-| `LocalJwt:SecretKey` | Key that signs signature tokens. Long random value, identical on all instances. |
-| `OpenIddict:DefaultAdmin:ClientId`, `ClientSecret`, `DisplayName` | Administrator client created at first start; rotate its secret immediately. |
-| `OpenIddict:SigningCertificate`, `OpenIddict:EncryptionCertificate` (+ `…Password`) | Certificates for access tokens (identical on all instances). Without them, tokens become invalid on restart. |
+| Your backend → `https://{{SIGNER_HOST}}` | API calls (token, signature requests, downloads). |
+| Signers' browsers → `https://{{SIGNER_HOST}}` | SDK, document preview and signing. |
+| Standalone Signer → your webhook endpoints | Webhooks. If you filter incoming traffic, allow the addresses ViziBit gives you for your environment. |
+| Signers' browsers → `cdnjs.cloudflare.com` | PDF.js, unless you self-host it (`pdfJsUrl`, `pdfWorkerUrl`). |
+| Signers' browsers → provider pages | Consent pages of FINA, Certilia, Swisscom and A-Trust; for card/token signing, the ViziBit local component on the signer's own computer. |
 
-## Running more than one instance
+## On-premise installations
 
-A single instance (with a standby that takes over on failure) is the standard installation. To run several active instances behind a load balancer:
-
-1. **One database** for all instances.
-2. **Shared document folder.** Mount the same volume (e.g. NFS or SMB) at `LocalDocumentStorage:StoragePath` on every instance, with the same encryption keys. Any instance can then serve any document, run seals and run the expiry sweep.
-3. **Same keys everywhere:** `LocalJwt:SecretKey` and the OpenIddict certificates, so tokens issued by one instance are accepted by the others.
-4. **One instance processes QES/AES ceremonies.** The signed hash is handed from the `/pdf/digest_state` call to the waiting ceremony in that instance's memory. Set `Hangfire:QesSigningWorkerCount` to `0` on every other instance and configure the proxy to route `/v/1/signature/standalone/pdf/digest_state` always to the processing instance.
-5. **Sticky routing (optional).** A proxy that keeps a caller on the same instance (for example by hashing the `Authorization` header — the browser and the Signing Service send the same signature token for a request) reduces cross-instance traffic. It does not replace steps 2 and 4: the backend creates requests with its own access token, so a request's calls come from different callers.
-
-A shared cache that removes step 4 is planned.
+The Standalone Signer can also run in your own infrastructure. The API, the SDK and the behaviour described in this guide are the same as in the cloud; only the host differs. ViziBit installs and configures on-premise installations together with your operations team and provides the infrastructure, network and availability requirements during installation planning.
 
 ## Data retention
 
 * **Documents** are stored encrypted and deleted when you delete them or when `expiresAt` passes, whichever comes first.
-* **Signer phone numbers** are cleared from the request as soon as signing starts or the request reaches an outcome. The background job that runs a ceremony keeps its copy until the job record expires (24 hours after completion).
+* **Signer phone numbers** are removed from the request as soon as signing starts or the request reaches an outcome; temporary processing records are cleared within 24 hours.
 * **Request records** (state, policy, external reference, audit log; no document content) are kept for support and usage reporting.
-
-## Upgrade notes
-
-When upgrading an installation that used the earlier API (signing policy chosen in the signing UI):
-
-* The database schema is migrated automatically at start-up, including the signing time of requests that were already signed.
-* Requests created with the earlier API and not yet signed cannot be signed after the upgrade; they expire within their normal lifetime. Create new requests.
-* API clients must have their seals assigned (`sealIds`) before they can create `SES` requests.
-* Signing ceremonies running during the upgrade may fail and need to be repeated.
 
 ## Monitoring and support
 
-* `GET /v/1/signature/health/basic` (liveness) and `/health/ready` (database).
-* Every request has an audit log (dashboard) with each state change, webhook attempt and error; the SDK shows signers a support identifier (the `signatureRequestId`).
-* Administrators can re-send webhooks (`POST /dashboard/requests/{id}/retry-callback`) and force-expire stuck requests (`POST /dashboard/requests/{id}/expire`).
+* `GET https://{{SIGNER_HOST}}/v/1/signature/health/basic` (liveness) and `/v/1/signature/health/ready` (readiness).
+* Every request has an audit log in the [dashboard](#dashboard) with each state change, webhook attempt and error; the SDK shows signers a support identifier (the `signatureRequestId`) to quote when contacting support.
+* ViziBit support can re-send webhooks and expire stuck requests.
 * Provider availability (FINA, AKD/Certilia, Swisscom, A-Trust) is outside the Standalone Signer; provider errors are reported in the webhook `message` and the audit log.
 
 # Administration (API clients)
