@@ -34,7 +34,7 @@ Other useful URLs on the demo host:
 | `https://standalone-signer-demo.signator.eu/v/1/signature/standalone/health/basic` | Liveness |
 | `https://standalone-signer-demo.signator.eu/v/1/signature/standalone/health/ready` | Readiness |
 | `https://standalone-signer-demo.signator.eu/signature/standalone/sdk/signator-signer-sdk.js` | JavaScript SDK |
-| [`https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html) | SDK test harness (see [Try the flows](#try-the-flows)) |
+| [`https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html) | SDK test harness (see [Try the flows](#try-the-flows)) |
 | `https://standalone-signer-demo.signator.eu/signature/standalone/sdk/sign.html` | [Hosted signing page](#hosted-signing-page), where the signer finishes after identification |
 | [`https://standalone-signer-demo.signator.eu/signature/standalone/`](https://standalone-signer-demo.signator.eu/signature/standalone/) | Signature request dashboard (sign in with your API client) |
 
@@ -99,15 +99,15 @@ The [SDK test harness](#sdk-test-harness) on your Standalone Signer host runs ev
 
 | Flow | Open the harness with | What you see |
 |---|---|---|
-| QES, signer chooses the provider | [`sdk-test.html?scenario=qes`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=qes) | Provider chooser (FINA, Certilia, Swisscom), provider consent, `Signed` → `Finished`. |
-| QES, one provider | [`sdk-test.html?scenario=qes-single`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=qes-single) | **Sign** goes straight to the provider. |
-| AES | [`sdk-test.html?scenario=aes`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=aes) | Advanced signature with Swisscom or a smart card / token. |
-| Smart card or token | [`sdk-test.html?scenario=local-component`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=local-component) | The local component check page and signing with the card. |
-| Organisation seal (SES) | [`sdk-test.html?scenario=ses`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=ses) | Sealed during the call with the ViziBit seal `Generic`; no provider page. |
-| Preset, locked signature position | [`sdk-test.html?scenario=preset-locked`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=preset-locked) | The signature is shown where your backend placed it and cannot be moved. |
-| Signer rejects | [`sdk-test.html?scenario=reject`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=reject) | **Reject** with a reason → `Rejected`, error webhook. |
-| Identification, then signing | [`sdk-test.html?scenario=identification`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=identification) | **I don't have a digital identity** → identification in a new window → that window becomes the signing page → signing with Swisscom; the harness page follows and reports the outcome. |
-| Your own backend's request | [`sdk-test.html`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html) → **Use existing token…** | The SDK with a signature token your backend created. |
+| QES, signer chooses the provider | [`sdk-demo.html?scenario=qes`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=qes) | Provider chooser (FINA, Certilia, Swisscom), provider consent, `Signed` → `Finished`. |
+| QES, one provider | [`sdk-demo.html?scenario=qes-single`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=qes-single) | **Sign** goes straight to the provider. |
+| AES | [`sdk-demo.html?scenario=aes`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=aes) | Advanced signature with Swisscom or a smart card / token. |
+| Smart card or token | [`sdk-demo.html?scenario=local-component`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=local-component) | The local component check page and signing with the card. |
+| Organisation seal (SES) | [`sdk-demo.html?scenario=ses`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=ses) | Sealed during the call with the ViziBit seal `Generic`; no provider page. |
+| Preset, locked signature position | [`sdk-demo.html?scenario=preset-locked`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=preset-locked) | The signature is shown where your backend placed it and cannot be moved. |
+| Signer rejects | [`sdk-demo.html?scenario=reject`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=reject) | **Reject** with a reason → `Rejected`, error webhook. |
+| Identification, then signing | [`sdk-demo.html?scenario=identification`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=identification) | **I don't have a digital identity** → identification in a new window → that window becomes the signing page → signing with Swisscom; the harness page follows and reports the outcome. |
+| Your own backend's request | [`sdk-demo.html`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html) → **Use existing token…** | The SDK with a signature token your backend created. |
 
 ## Request states
 
@@ -417,7 +417,7 @@ The same endpoint also accepts `multipart/form-data`, so large PDFs do not have 
 * If `request` has no `documentName`, the file name of the `document` part is used.
 * Sending the PDF both as the `document` part and in `request` returns `400`; a missing `request` part returns `400` (`errorCode` `275`); a missing PDF returns `400` (`errorCode` `135`).
 * Other content types than `application/json` and `multipart/form-data` return `415`.
-* To try it, open the [SDK test harness](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?format=multipart) with `?format=multipart` (or choose **Request format** there): the activity log shows the parts that were sent.
+* To try it, open the [SDK test harness](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?format=multipart) with `?format=multipart` (or choose **Request format** there): the activity log shows the parts that were sent.
 
 ### Signing policy rules
 
@@ -792,7 +792,7 @@ Signature placement: a signature with a known position (from the create call or 
 
 ## What the signer experiences
 
-Every behaviour below can be tried in the [SDK test harness](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html); see [Try the flows](#try-the-flows) for preconfigured links.
+Every behaviour below can be tried in the [SDK test harness](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html); see [Try the flows](#try-the-flows) for preconfigured links.
 
 * **Preset signature:** a signature with a position appears on the document right away — fixed when the request locks it, otherwise movable.
 * **SES (seal):** **Sign** seals the document immediately; no provider page.
@@ -943,7 +943,7 @@ Your organisation's seal certificate is installed and assigned to your API clien
 
 ## Seal without a user interface
 
-Try it in the harness: [`sdk-test.html?scenario=ses`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=ses) (seals with the ViziBit seal `Generic`; enter your own seal id to test it).
+Try it in the harness: [`sdk-demo.html?scenario=ses`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=ses) (seals with the ViziBit seal `Generic`; enter your own seal id to test it).
 
 ```shell
 # 1. create the request (as usual)
@@ -1001,7 +1001,7 @@ A signer who has no digital identity yet (no certificate with any provider you o
 
 ## How it works
 
-Try it in the harness: [`sdk-test.html?scenario=identification`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html?scenario=identification). On the signing page choose **Sign** → **I don't have a digital identity**.
+Try it in the harness: [`sdk-demo.html?scenario=identification`](https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html?scenario=identification). On the signing page choose **Sign** → **I don't have a digital identity**.
 
 1. Your backend creates the request with `allowIdentification: true`, `identificationProvider` and optionally `identificationMethods`.
 2. In the signing UI, **Sign** opens the provider chooser, which also offers **"I don't have a digital identity"**.
@@ -1173,7 +1173,7 @@ ViziBit provides a sandbox host and an API client per integration team and tells
 
 ## SDK test harness
 
-`https://standalone-signer-demo.signator.eu/signature/standalone/sdk-test.html` runs the complete flow against the host it is served from:
+`https://standalone-signer-demo.signator.eu/signature/standalone/sdk-demo.html` runs the complete flow against the host it is served from:
 
 1. **Sign in** with your API client (`client_id` / `client_secret`).
 2. **Signature request (your backend):** level, allowed providers, jurisdiction, signer phone number, identification (provider and methods), seal id, external reference, document name and expiry. This is exactly what your backend would send.
